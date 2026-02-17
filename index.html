@@ -38,12 +38,22 @@ margin-top:8px;background:#fafafa;padding:12px;border-radius:12px;
 .income{color:#2e7d32;font-weight:bold;}
 .expense{color:#c62828;font-weight:bold;}
 
-.summary{
-text-align:right;margin-top:10px;font-weight:bold;font-size:18px;
+.actions span{
+cursor:pointer;
+margin-left:8px;
+color:#888;
 }
 
+.summary{text-align:right;margin-top:10px;font-weight:bold;font-size:18px;}
 .balance-plus{color:#2e7d32;}
 .balance-minus{color:#c62828;}
+
+.version{
+text-align:center;
+font-size:12px;
+color:#999;
+margin-top:10px;
+}
 </style>
 </head>
 
@@ -69,7 +79,7 @@ text-align:right;margin-top:10px;font-weight:bold;font-size:18px;
 </select>
 
 <div class="btn-row">
-<button class="add" onclick="addItem()">เพิ่มรายการ</button>
+<button class="add" onclick="addItem()">บันทึก</button>
 <button class="clear" onclick="clearAll()">เคลียร์</button>
 </div>
 
@@ -80,10 +90,13 @@ text-align:right;margin-top:10px;font-weight:bold;font-size:18px;
 <div class="summary" id="summary"></div>
 </div>
 
+<div class="version">ver. 1.0.0</div>
+
 </div>
 
 <script>
 let data = JSON.parse(localStorage.getItem("data")) || [];
+let editIndex = null;
 
 function save(){
 localStorage.setItem("data",JSON.stringify(data));
@@ -103,9 +116,44 @@ const type = document.getElementById("type").value;
 
 if(!date || !detail || !amount) return;
 
-data.push({date,detail,amount,type});
+const item = {date,detail,amount,type};
+
+if(editIndex !== null){
+data[editIndex] = item;
+editIndex = null;
+}else{
+data.push(item);
+}
+
+save();
+clearForm();
+show();
+}
+
+function editItem(index){
+const d = data[index];
+
+document.getElementById("date").value = d.date;
+document.getElementById("detail").value = d.detail;
+document.getElementById("amount").value = d.amount;
+document.getElementById("type").value = d.type;
+
+editIndex = index;
+}
+
+function deleteItem(index){
+if(confirm("ลบรายการนี้?")){
+data.splice(index,1);
 save();
 show();
+}
+}
+
+function clearForm(){
+document.getElementById("date").value="";
+document.getElementById("detail").value="";
+document.getElementById("amount").value="";
+editIndex=null;
 }
 
 function show(){
@@ -116,7 +164,7 @@ let income=0,expense=0;
 
 data.sort((a,b)=> new Date(b.date) - new Date(a.date));
 
-data.forEach(d=>{
+data.forEach((d,i)=>{
 
 if(d.type=="income") income+=parseInt(d.amount);
 else expense+=parseInt(d.amount);
@@ -127,9 +175,18 @@ list.innerHTML+=`
 <div>${d.detail}</div>
 <div class="date">${formatDate(d.date)}</div>
 </div>
+
+<div>
 <div class="${d.type}">
 ${d.type=="income" ? "+" : "-"}${d.amount}
 </div>
+
+<div class="actions">
+<span onclick="editItem(${i})" class="material-icons">edit</span>
+<span onclick="deleteItem(${i})" class="material-icons">delete</span>
+</div>
+</div>
+
 </div>`;
 });
 
