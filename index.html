@@ -3,91 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>รายรับรายจ่าย</title>
 
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <style>
-body{
-    font-family: system-ui;
-    background:#f5f7fa;
-    margin:0;
-}
+body{font-family:system-ui;background:#f5f7fa;margin:0;}
+.container{max-width:500px;margin:auto;padding:15px;}
+.card{background:white;padding:18px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.05);margin-bottom:15px;}
 
-.container{
-    max-width:500px;
-    margin:auto;
-    padding:15px;
-}
+.logo{text-align:center;margin-bottom:10px;}
+.logo span{font-size:48px;color:#4CAF50;background:#E8F5E9;padding:12px;border-radius:50%;}
 
-.card{
-    background:white;
-    padding:18px;
-    border-radius:16px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.05);
-    margin-bottom:15px;
-}
-
-.logo{
-    text-align:center;
-    margin-bottom:10px;
-}
-
-.logo span{
-    font-size:48px;
-    color:#4CAF50;
-    background:#E8F5E9;
-    padding:12px;
-    border-radius:50%;
-}
-
-h2{
-    text-align:center;
-    margin:5px 0 15px;
-}
+h2{text-align:center;margin:5px 0 15px;}
 
 input,select{
-    width:100%;
-    padding:12px;
-    margin-bottom:10px;
-    border-radius:10px;
-    border:1px solid #ddd;
-    font-size:16px;
+width:100%;padding:12px;margin-bottom:10px;border-radius:10px;
+border:1px solid #ddd;font-size:16px;
 }
 
-.btn-row{
-    display:flex;
-    gap:10px;
-}
-
-button{
-    flex:1;
-    padding:12px;
-    border:none;
-    border-radius:12px;
-    font-size:16px;
-    color:white;
-}
-
+.btn-row{display:flex;gap:10px;}
+button{flex:1;padding:12px;border:none;border-radius:12px;font-size:16px;color:white;}
 .add{background:#4CAF50;}
 .clear{background:#ff3b30;}
 
 .item{
-    display:flex;
-    justify-content:space-between;
-    margin-top:8px;
-    background:#fafafa;
-    padding:10px;
-    border-radius:10px;
-    font-size:14px;
+display:flex;justify-content:space-between;align-items:center;
+margin-top:8px;background:#fafafa;padding:12px;border-radius:12px;
 }
 
+.left{font-size:14px;}
+.date{font-size:12px;color:#888;}
+
+.income{color:#2e7d32;font-weight:bold;}
+.expense{color:#c62828;font-weight:bold;}
+
 .summary{
-    text-align:right;
-    margin-top:10px;
-    font-weight:bold;
+text-align:right;margin-top:10px;font-weight:bold;font-size:18px;
 }
+
+.balance-plus{color:#2e7d32;}
+.balance-minus{color:#c62828;}
 </style>
 </head>
 
@@ -103,8 +59,7 @@ button{
 
 <h2>บันทึกรายรับรายจ่าย</h2>
 
-<select id="month"></select>
-
+<input type="date" id="date">
 <input type="text" id="detail" placeholder="รายละเอียด">
 <input type="number" id="amount" placeholder="จำนวนเงิน">
 
@@ -128,70 +83,72 @@ button{
 </div>
 
 <script>
-const thaiMonths = [
-"มกราคม","กุมภาพันธ์","มีนาคม","เมษายน",
-"พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม",
-"กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"
-];
-
-const monthSelect = document.getElementById("month");
-
-thaiMonths.forEach((m,i)=>{
-    monthSelect.innerHTML += `<option value="${i}">${m} ${new Date().getFullYear()+543}</option>`;
-});
-
 let data = JSON.parse(localStorage.getItem("data")) || [];
 
 function save(){
-    localStorage.setItem("data",JSON.stringify(data));
+localStorage.setItem("data",JSON.stringify(data));
+}
+
+function formatDate(dateStr){
+const d = new Date(dateStr);
+const thaiMonths = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+return d.getDate()+" "+thaiMonths[d.getMonth()]+" "+(d.getFullYear()+543);
 }
 
 function addItem(){
-    const detail = document.getElementById("detail").value;
-    const amount = document.getElementById("amount").value;
-    const type = document.getElementById("type").value;
-    const month = document.getElementById("month").value;
+const date = document.getElementById("date").value;
+const detail = document.getElementById("detail").value;
+const amount = document.getElementById("amount").value;
+const type = document.getElementById("type").value;
 
-    if(!detail || !amount) return;
+if(!date || !detail || !amount) return;
 
-    data.push({detail,amount,type,month});
-    save();
-    show();
+data.push({date,detail,amount,type});
+save();
+show();
 }
 
 function show(){
-    const list = document.getElementById("list");
-    const month = document.getElementById("month").value;
+const list = document.getElementById("list");
+list.innerHTML="";
 
-    list.innerHTML="";
+let income=0,expense=0;
 
-    let income=0,expense=0;
+data.sort((a,b)=> new Date(b.date) - new Date(a.date));
 
-    data.filter(d=>d.month==month).forEach((d,i)=>{
+data.forEach(d=>{
 
-        if(d.type=="income") income+=parseInt(d.amount);
-        else expense+=parseInt(d.amount);
+if(d.type=="income") income+=parseInt(d.amount);
+else expense+=parseInt(d.amount);
 
-        list.innerHTML+=`
-        <div class="item">
-            <span>${d.detail}</span>
-            <span>${d.amount}</span>
-        </div>`;
-    });
+list.innerHTML+=`
+<div class="item">
+<div class="left">
+<div>${d.detail}</div>
+<div class="date">${formatDate(d.date)}</div>
+</div>
+<div class="${d.type}">
+${d.type=="income" ? "+" : "-"}${d.amount}
+</div>
+</div>`;
+});
 
-    document.getElementById("summary").innerHTML=
-    `คงเหลือ: ${income-expense} บาท`;
+let balance = income-expense;
+
+document.getElementById("summary").innerHTML=`
+รายรับ: <span class="income">${income}</span> |
+รายจ่าย: <span class="expense">${expense}</span><br>
+คงเหลือ: <span class="${balance>=0 ? 'balance-plus':'balance-minus'}">${balance}</span> บาท
+`;
 }
 
 function clearAll(){
-    if(confirm("ลบทั้งหมด?")){
-        data=[];
-        save();
-        show();
-    }
+if(confirm("ลบทั้งหมด?")){
+data=[];
+save();
+show();
 }
-
-monthSelect.addEventListener("change",show);
+}
 
 show();
 </script>
