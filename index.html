@@ -3,67 +3,88 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>รายรับรายจ่าย</title>
+<title>บันทึกรายรับรายจ่าย</title>
 
 <style>
 body{
-  font-family: system-ui;
-  background:#f5f5f5;
-  margin:0;
-  padding:15px;
+    font-family: "Prompt", sans-serif;
+    background:#f5f7fb;
+    margin:0;
+    padding:15px;
 }
-.container{
-  max-width:500px;
-  margin:auto;
-  background:white;
-  padding:20px;
-  border-radius:16px;
-  box-shadow:0 5px 15px rgba(0,0,0,.08);
-}
-h2{text-align:center;}
 
-input,select,button{
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  font-size:16px;
+.container{
+    max-width:500px;
+    margin:auto;
+}
+
+.card{
+    background:#fff;
+    padding:20px;
+    border-radius:16px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom:15px;
+}
+
+h2{
+    text-align:center;
+    margin-bottom:15px;
+}
+
+input, select{
+    width:100%;
+    padding:12px;
+    margin-top:8px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    font-size:16px;
+}
+
+.button-group{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
 }
 
 button{
-  background:black;
-  color:white;
-  border:none;
+    flex:1;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    font-size:16px;
+    cursor:pointer;
 }
 
-.list{
-  margin-top:15px;
+.add{
+    background:#4CAF50;
+    color:white;
 }
 
-.item{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:10px;
-  border-bottom:1px solid #eee;
-}
-
-.income{color:green;}
-.expense{color:red;}
-
-.del{
-  background:red;
-  padding:5px 10px;
-  border-radius:8px;
-  color:white;
-  font-size:12px;
-  width:auto;
+.clear{
+    background:#ff5252;
+    color:white;
 }
 
 .summary{
-  margin-top:15px;
-  font-weight:bold;
+    text-align:center;
+    font-size:18px;
+    margin-top:10px;
+}
+
+.income{ color:green; }
+.expense{ color:red; }
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+th, td{
+    padding:10px;
+    text-align:center;
+    border-bottom:1px solid #eee;
+    font-size:14px;
 }
 </style>
 </head>
@@ -71,133 +92,118 @@ button{
 <body>
 
 <div class="container">
-<h2>💰 รายรับรายจ่าย</h2>
 
-<select id="month"></select>
+    <div class="card">
+        <h2>บันทึกรายรับรายจ่าย</h2>
 
-<input type="text" id="desc" placeholder="รายการ">
-<input type="number" id="amount" placeholder="จำนวนเงิน">
+        <input type="date" id="date">
 
-<select id="type">
-  <option value="income">รายรับ</option>
-  <option value="expense">รายจ่าย</option>
-</select>
+        <select id="type">
+            <option value="income">รายรับ</option>
+            <option value="expense">รายจ่าย</option>
+        </select>
 
-<button onclick="addItem()">เพิ่มรายการ</button>
-<button onclick="clearAll()">เคลียร์ข้อมูล</button>
+        <input type="number" id="amount" placeholder="จำนวนเงิน">
 
-<div class="summary" id="summary"></div>
-<div class="list" id="list"></div>
+        <input type="text" id="note" placeholder="หมายเหตุ">
+
+        <div class="button-group">
+            <button class="add" onclick="addItem()">เพิ่มรายการ</button>
+            <button class="clear" onclick="clearData()">เคลียร์</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="summary">
+            💰 คงเหลือ: <span id="balance">0</span> บาท
+        </div>
+        <div class="summary income">
+            รายรับ: <span id="totalIncome">0</span>
+        </div>
+        <div class="summary expense">
+            รายจ่าย: <span id="totalExpense">0</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>วัน</th>
+                    <th>รายการ</th>
+                    <th>จำนวน</th>
+                </tr>
+            </thead>
+            <tbody id="list"></tbody>
+        </table>
+    </div>
 
 </div>
 
 <script>
 
-const thaiMonths = [
-"มกราคม","กุมภาพันธ์","มีนาคม","เมษายน",
-"พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม",
-"กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"
+const monthTH = [
+"ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
+"ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."
 ];
 
-const monthSelect = document.getElementById("month");
+let data = JSON.parse(localStorage.getItem("data")) || [];
 
-thaiMonths.forEach((m,i)=>{
-  monthSelect.innerHTML += `<option value="${i}">${m}</option>`;
-});
-
-monthSelect.value = new Date().getMonth();
-
-function getData(){
-  return JSON.parse(localStorage.getItem("expenseData")) || {};
-}
-
-function saveData(data){
-  localStorage.setItem("expenseData",JSON.stringify(data));
+function formatDate(date){
+    let d = new Date(date);
+    return d.getDate()+" "+monthTH[d.getMonth()]+" "+(d.getFullYear()+543);
 }
 
 function addItem(){
+    let date = document.getElementById("date").value;
+    let type = document.getElementById("type").value;
+    let amount = document.getElementById("amount").value;
+    let note = document.getElementById("note").value;
 
-  const desc = document.getElementById("desc").value;
-  const amount = document.getElementById("amount").value;
-  const type = document.getElementById("type").value;
-  const month = monthSelect.value;
+    if(!date || !amount) return;
 
-  if(!desc || !amount) return;
+    data.push({date,type,amount:parseFloat(amount),note});
+    localStorage.setItem("data", JSON.stringify(data));
 
-  const data = getData();
-
-  if(!data[month]) data[month]=[];
-
-  data[month].push({desc,amount,type});
-
-  saveData(data);
-
-  document.getElementById("desc").value="";
-  document.getElementById("amount").value="";
-
-  render();
+    showData();
 }
 
-function deleteItem(index){
-
-  const month = monthSelect.value;
-  const data = getData();
-
-  data[month].splice(index,1);
-
-  saveData(data);
-  render();
+function clearData(){
+    if(confirm("ล้างข้อมูลทั้งหมด?")){
+        localStorage.removeItem("data");
+        data=[];
+        showData();
+    }
 }
 
-function clearAll(){
-  if(confirm("ลบข้อมูลทั้งหมด?")){
-    localStorage.removeItem("expenseData");
-    render();
-  }
-}
+function showData(){
 
-function render(){
+    let list = document.getElementById("list");
+    list.innerHTML="";
 
-  const list = document.getElementById("list");
-  const summary = document.getElementById("summary");
+    let income=0, expense=0;
 
-  const month = monthSelect.value;
-  const data = getData();
+    data.forEach(d=>{
+        let row = `
+        <tr>
+            <td>${formatDate(d.date)}</td>
+            <td>${d.note}</td>
+            <td class="${d.type}">
+                ${d.type=="income"?"+":"-"}${d.amount}
+            </td>
+        </tr>`;
+        list.innerHTML+=row;
 
-  list.innerHTML="";
-
-  let income=0;
-  let expense=0;
-
-  if(data[month]){
-    data[month].forEach((item,i)=>{
-
-      if(item.type==="income") income+=parseInt(item.amount);
-      else expense+=parseInt(item.amount);
-
-      list.innerHTML += `
-      <div class="item">
-        <div>
-          ${item.desc}<br>
-          <small class="${item.type}">
-          ${item.type==="income"?"+":"-"}${item.amount}
-          </small>
-        </div>
-        <button class="del" onclick="deleteItem(${i})">ลบ</button>
-      </div>`;
+        if(d.type=="income") income+=d.amount;
+        else expense+=d.amount;
     });
-  }
 
-  summary.innerHTML = `
-  รายรับ: ${income} บาท<br>
-  รายจ่าย: ${expense} บาท<br>
-  คงเหลือ: ${income-expense} บาท
-  `;
+    document.getElementById("totalIncome").innerText = income;
+    document.getElementById("totalExpense").innerText = expense;
+    document.getElementById("balance").innerText = income-expense;
 }
 
-monthSelect.addEventListener("change",render);
-
-render();
+showData();
 
 </script>
 
