@@ -5,209 +5,231 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>รายรับรายจ่าย</title>
 
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-body{font-family:system-ui;background:#f5f7fa;margin:0;}
-.container{max-width:500px;margin:auto;padding:15px;}
-.card{background:white;padding:18px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.05);margin-bottom:15px;}
-
-.logo{text-align:center;margin-bottom:10px;}
-.logo span{font-size:48px;color:#4CAF50;background:#E8F5E9;padding:12px;border-radius:50%;}
-
-h2{text-align:center;margin:5px 0 15px;}
-
-input,select{
-width:100%;padding:12px;margin-bottom:10px;border-radius:10px;
-border:1px solid #ddd;font-size:16px;
+*{
+  box-sizing:border-box;
+  font-family:'Prompt',sans-serif;
 }
 
-.btn-row{display:flex;gap:10px;}
-button{flex:1;padding:12px;border:none;border-radius:12px;font-size:16px;color:white;}
-.add{background:#4CAF50;}
-.clear{background:#ff3b30;}
+body{
+  margin:0;
+  background:#f5f6fa;
+}
+
+/* HEADER */
+.header{
+  background:#111827;
+  color:#fff;
+  padding:15px;
+  text-align:center;
+  font-size:20px;
+  font-weight:600;
+}
+
+/* BALANCE CARD */
+.balance-card{
+  margin:15px;
+  background:#fff;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.05);
+  text-align:center;
+}
+
+.balance{
+  font-size:28px;
+  font-weight:600;
+}
+
+/* LIST */
+.list{
+  padding:15px;
+  margin-bottom:90px;
+}
 
 .item{
-display:flex;justify-content:space-between;align-items:center;
-margin-top:8px;background:#fafafa;padding:12px;border-radius:12px;
+  background:#fff;
+  padding:15px;
+  border-radius:15px;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 3px 10px rgba(0,0,0,0.05);
 }
 
-.left{font-size:14px;}
-.date{font-size:12px;color:#888;}
+.income{ color:#16a34a; font-weight:600; }
+.expense{ color:#dc2626; font-weight:600; }
 
-.income{color:#2e7d32;font-weight:bold;}
-.expense{color:#c62828;font-weight:bold;}
-
-.actions span{
-cursor:pointer;
-margin-left:8px;
-color:#888;
+/* FLOAT BUTTON */
+.fab{
+  position:fixed;
+  bottom:80px;
+  right:20px;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  background:#2563eb;
+  color:#fff;
+  font-size:30px;
+  border:none;
+  box-shadow:0 5px 15px rgba(0,0,0,0.3);
 }
 
-.summary{text-align:right;margin-top:10px;font-weight:bold;font-size:18px;}
-.balance-plus{color:#2e7d32;}
-.balance-minus{color:#c62828;}
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:#fff;
+  display:flex;
+  justify-content:space-around;
+  padding:10px 0;
+  box-shadow:0 -2px 10px rgba(0,0,0,0.1);
+}
 
-.version{
-text-align:center;
-font-size:12px;
-color:#999;
-margin-top:10px;
+.bottom-nav div{
+  text-align:center;
+  font-size:12px;
+  color:#6b7280;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.4);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:#fff;
+  padding:20px;
+  border-radius:20px;
+  width:90%;
+}
+
+input, select{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+
+button.save{
+  margin-top:15px;
+  width:100%;
+  padding:12px;
+  border:none;
+  background:#16a34a;
+  color:#fff;
+  border-radius:12px;
+  font-size:16px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="header">💰 รายรับรายจ่าย</div>
 
-<div class="card">
-
-<div class="logo">
-<span class="material-icons">account_balance_wallet</span>
+<div class="balance-card">
+  <div>ยอดคงเหลือ</div>
+  <div class="balance" id="balance">0 บาท</div>
 </div>
 
-<h2>บันทึกรายรับรายจ่าย</h2>
+<div class="list" id="list"></div>
 
-<input type="date" id="date">
-<input type="text" id="detail" placeholder="รายละเอียด">
-<input type="number" id="amount" placeholder="จำนวนเงิน">
+<button class="fab" onclick="openModal()">+</button>
 
-<select id="type">
-<option value="income">รายรับ</option>
-<option value="expense">รายจ่าย</option>
-</select>
-
-<div class="btn-row">
-<button class="add" onclick="addItem()">บันทึก</button>
-<button class="clear" onclick="clearAll()">เคลียร์</button>
+<div class="bottom-nav">
+  <div>🏠<br>หน้าหลัก</div>
+  <div>📊<br>สรุป</div>
+  <div>⚙️<br>ตั้งค่า</div>
 </div>
 
-</div>
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>เพิ่มรายการ</h3>
 
-<div class="card">
-<div id="list"></div>
-<div class="summary" id="summary"></div>
-</div>
+    <input type="text" id="detail" placeholder="รายการ">
+    <input type="number" id="amount" placeholder="จำนวนเงิน">
 
-<div class="version">ver. 1.0.0</div>
+    <select id="type">
+      <option value="income">รายรับ</option>
+      <option value="expense">รายจ่าย</option>
+    </select>
 
+    <input type="date" id="date">
+
+    <button class="save" onclick="addItem()">บันทึก</button>
+  </div>
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("data")) || [];
-let editIndex = null;
+let data = [];
 
-function save(){
-localStorage.setItem("data",JSON.stringify(data));
+function openModal(){
+  document.getElementById('modal').style.display='flex';
 }
 
-function formatDate(dateStr){
-const d = new Date(dateStr);
-const thaiMonths = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-return d.getDate()+" "+thaiMonths[d.getMonth()]+" "+(d.getFullYear()+543);
+function closeModal(){
+  document.getElementById('modal').style.display='none';
+}
+
+function formatDate(date){
+  return new Date(date).toLocaleDateString('th-TH',{
+    year:'numeric',
+    month:'long',
+    day:'numeric'
+  });
 }
 
 function addItem(){
-const date = document.getElementById("date").value;
-const detail = document.getElementById("detail").value;
-const amount = document.getElementById("amount").value;
-const type = document.getElementById("type").value;
+  let detail=document.getElementById('detail').value;
+  let amount=document.getElementById('amount').value;
+  let type=document.getElementById('type').value;
+  let date=document.getElementById('date').value;
 
-if(!date || !detail || !amount) return;
+  data.push({detail,amount,type,date});
+  render();
 
-const item = {date,detail,amount,type};
-
-if(editIndex !== null){
-data[editIndex] = item;
-editIndex = null;
-}else{
-data.push(item);
+  closeModal();
 }
 
-save();
-clearForm();
-show();
+function render(){
+  let list=document.getElementById('list');
+  list.innerHTML='';
+
+  let balance=0;
+
+  data.forEach((d,index)=>{
+    balance += d.type==='income' ? +d.amount : -d.amount;
+
+    list.innerHTML+=`
+      <div class="item">
+        <div>
+          <div>${d.detail}</div>
+          <small>${formatDate(d.date)}</small>
+        </div>
+        <div class="${d.type}">
+          ${d.type==='income' ? '+' : '-'}${d.amount}
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('balance').innerText=balance+' บาท';
 }
-
-function editItem(index){
-const d = data[index];
-
-document.getElementById("date").value = d.date;
-document.getElementById("detail").value = d.detail;
-document.getElementById("amount").value = d.amount;
-document.getElementById("type").value = d.type;
-
-editIndex = index;
-}
-
-function deleteItem(index){
-if(confirm("ลบรายการนี้?")){
-data.splice(index,1);
-save();
-show();
-}
-}
-
-function clearForm(){
-document.getElementById("date").value="";
-document.getElementById("detail").value="";
-document.getElementById("amount").value="";
-editIndex=null;
-}
-
-function show(){
-const list = document.getElementById("list");
-list.innerHTML="";
-
-let income=0,expense=0;
-
-data.sort((a,b)=> new Date(b.date) - new Date(a.date));
-
-data.forEach((d,i)=>{
-
-if(d.type=="income") income+=parseInt(d.amount);
-else expense+=parseInt(d.amount);
-
-list.innerHTML+=`
-<div class="item">
-<div class="left">
-<div>${d.detail}</div>
-<div class="date">${formatDate(d.date)}</div>
-</div>
-
-<div>
-<div class="${d.type}">
-${d.type=="income" ? "+" : "-"}${d.amount}
-</div>
-
-<div class="actions">
-<span onclick="editItem(${i})" class="material-icons">edit</span>
-<span onclick="deleteItem(${i})" class="material-icons">delete</span>
-</div>
-</div>
-
-</div>`;
-});
-
-let balance = income-expense;
-
-document.getElementById("summary").innerHTML=`
-รายรับ: <span class="income">${income}</span> |
-รายจ่าย: <span class="expense">${expense}</span><br>
-คงเหลือ: <span class="${balance>=0 ? 'balance-plus':'balance-minus'}">${balance}</span> บาท
-`;
-}
-
-function clearAll(){
-if(confirm("ลบทั้งหมด?")){
-data=[];
-save();
-show();
-}
-}
-
-show();
 </script>
 
 </body>
