@@ -3,126 +3,193 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Expense Tracker</title>
+<title>รายรับรายจ่าย</title>
 
-<link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{font-family:system-ui;background:#f5f7fa;margin:0;}
-.dark{background:#121212;color:white;}
-.container{max-width:520px;margin:auto;padding:15px;}
-.card{background:white;padding:15px;border-radius:16px;margin-bottom:15px;}
+body{margin:0;font-family:'Prompt',sans-serif;background:#f1f5f9;}
+.dark{background:#111;color:#fff;}
+
+.header{background:#2563eb;color:#fff;padding:15px;text-align:center;font-size:20px;}
+
+.page{display:none;padding:15px;}
+.active{display:block;}
+
+.card{background:#fff;padding:15px;border-radius:15px;margin-bottom:15px;}
 .dark .card{background:#1e1e1e;}
-.add-btn{position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:50%;font-size:30px;background:#4CAF50;color:white;}
+
+.balance{text-align:center;font-size:26px;font-weight:600;}
+
+.item{display:flex;justify-content:space-between;background:#fff;padding:12px;border-radius:12px;margin-bottom:10px;}
+.dark .item{background:#1e1e1e;}
+
+.income{color:#16a34a;font-weight:600;}
+.expense{color:#dc2626;font-weight:600;}
+
+.fab{
+position:fixed;right:20px;bottom:80px;background:#2563eb;color:#fff;
+width:55px;height:55px;border-radius:50%;font-size:30px;border:none;
+}
+
+.nav{position:fixed;bottom:0;width:100%;display:flex;background:#fff;border-top:1px solid #ddd;}
+.nav button{flex:1;padding:12px;border:none;background:none;}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.3);display:none;justify-content:center;align-items:center;}
+.modal-content{background:#fff;padding:20px;border-radius:15px;width:90%;}
+.dark .modal-content{background:#1e1e1e;}
+
+input,select{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #ddd;}
+
+.version{text-align:center;font-size:12px;color:#888;margin-top:10px;}
 </style>
 </head>
 
-<body>
+<body id="body">
 
-<div class="container">
+<div class="header">💰 รายรับรายจ่าย</div>
 
-<div class="card">
-<h3>แนวโน้มรายเดือน</h3>
-<canvas id="monthChart"></canvas>
+<div id="home" class="page active">
+  <div class="card balance">คงเหลือ: <span id="balance">0</span></div>
+
+  <select id="monthSelect" onchange="render()"></select>
+
+  <div id="list"></div>
 </div>
 
-<div class="card">
-<button onclick="backup()">☁️ Backup</button>
-<input type="file" onchange="restore(event)">
-<button onclick="notifyMe()">🔔 เตือนบันทึก</button>
-<button onclick="toggleDark()">🌙 Dark</button>
+<div id="summary" class="page">
+  <div class="card">รายรับรวม: <span id="sumIncome">0</span></div>
+  <div class="card">รายจ่ายรวม: <span id="sumExpense">0</span></div>
+  <canvas id="chart"></canvas>
 </div>
 
+<div id="setting" class="page">
+  <div class="card">
+    <button onclick="toggleDarkMode()">🌙 เปลี่ยนโหมด</button>
+    <button onclick="clearData()">🗑 เคลียร์ข้อมูล</button>
+  </div>
+  <div class="version">ver. 1.1.0</div>
 </div>
 
-<button class="add-btn" onclick="addDummy()">+</button>
+<button class="fab" onclick="openModal()">+</button>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>เพิ่มรายการ</h3>
+    <input id="detail" placeholder="รายการ">
+    <input id="amount" type="number" placeholder="จำนวนเงิน">
+
+    <select id="type">
+      <option value="income">รายรับ</option>
+      <option value="expense">รายจ่าย</option>
+    </select>
+
+    <input id="date" type="date">
+    <button onclick="addItem()">บันทึก</button>
+  </div>
+</div>
+
+<div class="nav">
+  <button onclick="showPage('home')">หน้าหลัก</button>
+  <button onclick="showPage('summary')">สรุป</button>
+  <button onclick="showPage('setting')">ตั้งค่า</button>
+</div>
 
 <script>
-let data=JSON.parse(localStorage.getItem("data"))||[];
+let data = JSON.parse(localStorage.getItem("data")) || [];
+let chart;
 
 function save(){localStorage.setItem("data",JSON.stringify(data));}
 
-// 📊 กราฟรายเดือน
-function drawMonthChart(){
-
-let income=[0,0,0,0,0,0,0,0,0,0,0,0];
-let expense=[0,0,0,0,0,0,0,0,0,0,0,0];
-
-data.forEach(d=>{
-let m=new Date(d.date).getMonth();
-if(d.type=="income") income[m]+=d.amount;
-else expense[m]+=d.amount;
-});
-
-new Chart(monthChart,{
-type:'line',
-data:{
-labels:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],
-datasets:[
-{label:"รายรับ",data:income},
-{label:"รายจ่าย",data:expense}
-]
-}
-});
+function showPage(page){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(page).classList.add("active");
+if(page==="summary") renderChart();
 }
 
-// ☁️ Backup
-function backup(){
-let blob=new Blob([JSON.stringify(data)]);
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="backup.json";
-a.click();
-}
+function openModal(){modal.style.display="flex";}
 
-// ♻️ Restore
-function restore(e){
-let file=e.target.files[0];
-let reader=new FileReader();
-reader.onload=function(){
-data=JSON.parse(reader.result);
-save();
-location.reload();
-}
-reader.readAsText(file);
-}
-
-// 🌙 Dark mode
-if(localStorage.getItem("dark")) document.body.classList.add("dark");
-
-function toggleDark(){
-document.body.classList.toggle("dark");
-localStorage.setItem("dark",document.body.classList.contains("dark"));
-}
-
-// 🔔 Notification
-function notifyMe(){
-Notification.requestPermission().then(p=>{
-if(p==="granted"){
-new Notification("อย่าลืมบันทึกรายจ่ายวันนี้ 💸");
-}
-});
-}
-
-// ➕ dummy data test
-function addDummy(){
+function addItem(){
 data.push({
-date:new Date(),
-type:"expense",
-amount:Math.floor(Math.random()*500)
+detail:detail.value,
+amount:+amount.value,
+type:type.value,
+date:date.value
 });
 save();
-location.reload();
+render();
+modal.style.display="none";
 }
 
-// 📲 PWA
-if("serviceWorker" in navigator){
-navigator.serviceWorker.register("sw.js");
+function render(){
+let month=monthSelect.value;
+list.innerHTML="";
+let balance=0,income=0,expense=0;
+
+data.filter(d=>d.date.startsWith(month)).forEach((d,i)=>{
+balance+=d.type==="income"?d.amount:-d.amount;
+if(d.type==="income") income+=d.amount; else expense+=d.amount;
+
+list.innerHTML+=`
+<div class="item">
+<div>
+${d.detail}<br>
+<small>${new Date(d.date).toLocaleDateString('th-TH')}</small>
+</div>
+<div>
+<span class="${d.type}">
+${d.type==="income"?"+":"-"}${d.amount}
+</span>
+<button onclick="deleteItem(${i})">❌</button>
+</div>
+</div>`;
+});
+
+balanceEl.innerText=balance;
+sumIncome.innerText=income;
+sumExpense.innerText=expense;
 }
 
-drawMonthChart();
+function deleteItem(i){
+data.splice(i,1);
+save();
+render();
+}
+
+function clearData(){
+localStorage.clear();
+data=[];
+render();
+}
+
+function toggleDarkMode(){
+body.classList.toggle("dark");
+}
+
+function renderChart(){
+let income=+sumIncome.innerText;
+let expense=+sumExpense.innerText;
+
+if(chart) chart.destroy();
+
+chart=new Chart(document.getElementById("chart"),{
+type:"doughnut",
+data:{
+labels:["รายรับ","รายจ่าย"],
+datasets:[{data:[income,expense]}]
+}
+});
+}
+
+function loadMonths(){
+let months=[...new Set(data.map(d=>d.date.substring(0,7)))];
+monthSelect.innerHTML=months.map(m=>`<option value="${m}">${m}</option>`).join("");
+}
+
+loadMonths();
+render();
 </script>
 
 </body>
