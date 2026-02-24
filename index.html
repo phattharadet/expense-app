@@ -5,79 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Expense Tracker</title>
 
+<!-- ✅ ICON รองรับทุกระบบ -->
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#34C759">
+
+<!-- ✅ iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Expense Tracker">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="icon" type="image/svg+xml" href="favicon.ico">
 
 <style>
 body{font-family:system-ui;background:#f5f7fa;margin:0}
 .dark{background:#121212;color:#fff}
 .container{max-width:520px;margin:auto;padding:15px}
-
 .logo{text-align:center;margin-bottom:10px}
-
 .card{background:#fff;padding:15px;border-radius:16px;margin-bottom:15px}
 .dark .card{background:#1e1e1e}
-
 .dashboard{display:flex;text-align:center}
 .dashboard div{flex:1}
-
 input,select{width:100%;padding:10px;margin:5px 0;border-radius:10px;border:1px solid #ddd}
-
 .list-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-
 .income{color:#2e7d32;font-weight:bold}
 .expense{color:#c62828;font-weight:bold}
-
 button{border:none;border-radius:10px;padding:6px 10px;margin-top:5px;cursor:pointer}
-
-.add-btn{
-position:fixed;
-bottom:20px;
-right:20px;
-width:60px;
-height:60px;
-border-radius:50%;
-font-size:30px;
-background:#34C759;
-color:#fff;
-}
-
+.add-btn{position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:50%;font-size:30px;background:#34C759;color:#fff;}
 .app-version{text-align:center;font-size:12px;color:#999;margin:15px 0 90px}
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
 <!-- 🔥 LOGO WALLET -->
 <div class="logo">
-
+<!-- SVG เดิมอยู่ครบ -->
 <svg width="95" height="95" viewBox="0 0 120 120">
-
 <defs>
 <linearGradient id="walletGrad" x1="0" y1="0" x2="1" y2="1">
 <stop offset="0%" stop-color="#34C759"/>
 <stop offset="100%" stop-color="#30B0C7"/>
 </linearGradient>
 </defs>
-
-<!-- ตัวกระเป๋า -->
 <rect x="15" y="35" width="90" height="55" rx="18" fill="url(#walletGrad)"/>
-
-<!-- ฝาพับ -->
 <rect x="15" y="25" width="70" height="25" rx="12" fill="url(#walletGrad)"/>
-
-<!-- ช่องใส่บัตร -->
 <rect x="25" y="48" width="55" height="10" rx="5" fill="white" opacity="0.9"/>
 <rect x="25" y="63" width="45" height="10" rx="5" fill="white" opacity="0.7"/>
-
-<!-- กระดุม -->
 <circle cx="88" cy="62" r="6" fill="white"/>
-
 </svg>
-
 <div style="font-weight:600;font-size:18px">Expense Tracker</div>
 </div>
 
@@ -138,13 +118,11 @@ color:#fff;
 
 <div id="list"></div>
 <div class="app-version" id="appVersion"></div>
-
 </div>
 
 <button class="add-btn" onclick="addItem()">+</button>
 
 <script>
-
 const APP_VERSION="2.2.0"
 appVersion.innerText="ver. "+APP_VERSION
 
@@ -154,7 +132,6 @@ let debts=JSON.parse(localStorage.getItem("debts"))||[]
 const months=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]
 
 months.forEach((m,i)=>month.innerHTML+=`<option value="${i}">${m}</option>`)
-
 for(let y=2565;y<=2575;y++){year.innerHTML+=`<option>${y}</option>`}
 
 month.value=new Date().getMonth()
@@ -173,70 +150,33 @@ return debts.reduce((sum,d)=>sum+(d.total-d.paid),0)
 }
 
 function addItem(){
-
 if(!date.value||!detail.value||!amount.value){alert("กรอกข้อมูลให้ครบ");return}
-
-data.push({
-date:date.value,
-detail:detail.value,
-amount:+amount.value,
-type:type.value,
-category:category.value
-})
-
-saveAll()
-show()
-
-date.value=""
-detail.value=""
-amount.value=""
+data.push({date:date.value,detail:detail.value,amount:+amount.value,type:type.value,category:category.value})
+saveAll(); show()
+date.value=""; detail.value=""; amount.value=""
 }
 
 function addDebt(){
-
 if(!debtName.value||!debtTotal.value){alert("กรอกข้อมูลให้ครบ");return}
-
-debts.push({
-name:debtName.value,
-type:debtType.value,
-total:+debtTotal.value,
-paid:0
-})
-
-saveAll()
-show()
-
-debtName.value=""
-debtTotal.value=""
+debts.push({name:debtName.value,type:debtType.value,total:+debtTotal.value,paid:0})
+saveAll(); show()
+debtName.value=""; debtTotal.value=""
 }
 
 function payDebt(i){
 let pay=prompt("จำนวนเงินที่จ่าย")
-if(pay){
-debts[i].paid+=+pay
-saveAll()
-show()
-}
+if(pay){debts[i].paid+=+pay; saveAll(); show()}
 }
 
 function deleteDebt(i){
-if(confirm("ลบหนี้ก้อนนี้?")){
-debts.splice(i,1)
-saveAll()
-show()
-}
+if(confirm("ลบหนี้ก้อนนี้?")){debts.splice(i,1); saveAll(); show()}
 }
 
 function deleteItem(i){
-if(confirm("ลบรายการนี้?")){
-data.splice(i,1)
-saveAll()
-show()
-}
+if(confirm("ลบรายการนี้?")){data.splice(i,1); saveAll(); show()}
 }
 
 function show(){
-
 let m=month.value
 let y=year.value-543
 let keyword=search.value.trim().toLowerCase()
@@ -245,13 +185,10 @@ let incomeTotal=0,expenseTotal=0
 list.innerHTML=""
 
 data.forEach((d,i)=>{
-
 let dt=new Date(d.date)
 if(dt.getMonth()!=m || dt.getFullYear()!=y) return
-
 let text=(d.detail+d.category+d.amount).toLowerCase()
 if(!text.includes(keyword)) return
-
 if(d.type=="income") incomeTotal+=d.amount
 else expenseTotal+=d.amount
 
@@ -261,34 +198,26 @@ list.innerHTML+=`
 ${d.detail}<br>
 <small>${d.category} | ${formatDate(d.date)}</small>
 </div>
-
 <div class="${d.type}">
-${formatMoney(d.amount)}
-<br>
+${formatMoney(d.amount)}<br>
 <button onclick="deleteItem(${i})">ลบ</button>
 </div>
-</div>
-`
+</div>`
 })
 
 debts.forEach((d,i)=>{
-
 list.innerHTML+=`
 <div class="card list-item">
 <div>
-💳 ${d.name}
-<br>
-<small>${d.type}</small>
-<br>
+💳 ${d.name}<br>
+<small>${d.type}</small><br>
 <small>คงเหลือ ${formatMoney(d.total-d.paid)}</small>
 </div>
-
 <div>
 <button onclick="payDebt(${i})">จ่าย</button>
 <button onclick="deleteDebt(${i})">ลบ</button>
 </div>
-</div>
-`
+</div>`
 })
 
 balance.innerText=formatMoney(incomeTotal-expenseTotal)
@@ -302,26 +231,16 @@ drawChart(incomeTotal,expenseTotal)
 let chart
 
 function drawChart(i,e){
-
 if(chart) chart.destroy()
-
-chart=new Chart(chart,{
+chart=new Chart(document.getElementById("chart"),{
 type:'doughnut',
-data:{
-labels:['รายรับ','รายจ่าย'],
-datasets:[{data:[i,e]}]
-}
+data:{labels:['รายรับ','รายจ่าย'],datasets:[{data:[i,e]}]}
 })
 }
 
 function exportCSV(){
-
 let csv="วันที่,รายการ,หมวดหมู่,ประเภท,จำนวน\n"
-
-data.forEach(d=>{
-csv+=`${d.date},${d.detail},${d.category},${d.type},${d.amount}\n`
-})
-
+data.forEach(d=>{csv+=`${d.date},${d.detail},${d.category},${d.type},${d.amount}\n`})
 let blob=new Blob([csv])
 let a=document.createElement("a")
 a.href=URL.createObjectURL(blob)
@@ -336,7 +255,6 @@ month.addEventListener("change",show)
 year.addEventListener("change",show)
 
 show()
-
 </script>
 
 </body>
