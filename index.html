@@ -11,35 +11,18 @@
 <style>
 body{font-family:system-ui;background:#f5f7fa;margin:0}
 .dark{background:#121212;color:#fff}
-
 .container{max-width:520px;margin:auto;padding:15px}
-
 .card{background:#fff;padding:15px;border-radius:16px;margin-bottom:15px}
 .dark .card{background:#1e1e1e}
-
 .dashboard{display:flex;text-align:center}
 .dashboard div{flex:1}
-
-input,select{
-width:100%;padding:10px;margin:5px 0;border-radius:10px;border:1px solid #ddd
-}
-
+input,select{width:100%;padding:10px;margin:5px 0;border-radius:10px;border:1px solid #ddd}
 .list-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-
 .income{color:#2e7d32;font-weight:bold}
 .expense{color:#c62828;font-weight:bold}
-
-button{
-border:none;border-radius:10px;padding:6px 10px;margin-top:5px;cursor:pointer
-}
-
-.add-btn{
-position:fixed;bottom:20px;right:20px;width:60px;height:60px;
-border-radius:50%;font-size:30px;background:#4CAF50;color:#fff
-}
-
+button{border:none;border-radius:10px;padding:6px 10px;margin-top:5px;cursor:pointer}
+.add-btn{position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:50%;font-size:30px;background:#4CAF50;color:#fff}
 .app-version{text-align:center;font-size:12px;color:#999;margin:15px 0 90px}
-.dark .app-version{color:#666}
 </style>
 </head>
 
@@ -51,6 +34,7 @@ border-radius:50%;font-size:30px;background:#4CAF50;color:#fff
 <div><small>คงเหลือ</small><h3 id="balance"></h3></div>
 <div><small>รายรับ</small><h3 id="income"></h3></div>
 <div><small>รายจ่าย</small><h3 id="expense"></h3></div>
+<div><small>หนี้</small><h3 id="debt" style="color:#ef6c00"></h3></div>
 </div>
 
 <div class="card">
@@ -83,6 +67,23 @@ border-radius:50%;font-size:30px;background:#4CAF50;color:#fff
 <button onclick="toggleDark()">🌙 Dark mode</button>
 </div>
 
+<div class="card">
+<h4>เพิ่มหนี้</h4>
+
+<select id="debtType">
+<option>บัตรเครดิต</option>
+<option>ผ่อนโทรศัพท์</option>
+<option>ผ่อนรถ</option>
+<option>เงินกู้</option>
+<option>อื่น ๆ</option>
+</select>
+
+<input type="text" id="debtName" placeholder="ชื่อหนี้">
+<input type="number" id="debtTotal" placeholder="ยอดหนี้ทั้งหมด">
+
+<button onclick="addDebt()">บันทึกหนี้</button>
+</div>
+
 <div id="list"></div>
 <div class="app-version" id="appVersion"></div>
 
@@ -92,59 +93,46 @@ border-radius:50%;font-size:30px;background:#4CAF50;color:#fff
 
 <script>
 
-const APP_VERSION="2.0.0"
+const APP_VERSION="2.2.0"
 appVersion.innerText="ver. "+APP_VERSION
 
 let data=JSON.parse(localStorage.getItem("data"))||[]
-let editIndex=null
+let debts=JSON.parse(localStorage.getItem("debts"))||[]
 
 const months=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]
 
 months.forEach((m,i)=>month.innerHTML+=`<option value="${i}">${m}</option>`)
 
-for(let y=2565;y<=2575;y++){
-year.innerHTML+=`<option>${y}</option>`
-}
+for(let y=2565;y<=2575;y++){year.innerHTML+=`<option>${y}</option>`}
 
 month.value=new Date().getMonth()
 year.value=new Date().getFullYear()+543
 
-function save(){
+function saveAll(){
 localStorage.setItem("data",JSON.stringify(data))
+localStorage.setItem("debts",JSON.stringify(debts))
 }
 
-function formatMoney(n){
-return n.toLocaleString()+" บาท"
-}
+function formatMoney(n){return n.toLocaleString()+" บาท"}
+function formatDate(d){return new Date(d).toLocaleDateString("th-TH")}
 
-function formatDate(d){
-let date=new Date(d)
-return date.toLocaleDateString("th-TH")
+function totalDebt(){
+return debts.reduce((sum,d)=>sum+(d.total-d.paid),0)
 }
 
 function addItem(){
 
-if(!date.value||!detail.value||!amount.value){
-alert("กรอกข้อมูลให้ครบ")
-return
-}
+if(!date.value||!detail.value||!amount.value){alert("กรอกข้อมูลให้ครบ");return}
 
-const item={
+data.push({
 date:date.value,
 detail:detail.value,
 amount:+amount.value,
 type:type.value,
 category:category.value
-}
+})
 
-if(editIndex!==null){
-data[editIndex]=item
-editIndex=null
-}else{
-data.push(item)
-}
-
-save()
+saveAll()
 show()
 
 date.value=""
@@ -152,20 +140,45 @@ detail.value=""
 amount.value=""
 }
 
-function editItem(i){
-const d=data[i]
-date.value=d.date
-detail.value=d.detail
-amount.value=d.amount
-type.value=d.type
-category.value=d.category
-editIndex=i
+function addDebt(){
+
+if(!debtName.value||!debtTotal.value){alert("กรอกข้อมูลให้ครบ");return}
+
+debts.push({
+name:debtName.value,
+type:debtType.value,
+total:+debtTotal.value,
+paid:0
+})
+
+saveAll()
+show()
+
+debtName.value=""
+debtTotal.value=""
+}
+
+function payDebt(i){
+let pay=prompt("จำนวนเงินที่จ่าย")
+if(pay){
+debts[i].paid+=+pay
+saveAll()
+show()
+}
+}
+
+function deleteDebt(i){
+if(confirm("ลบหนี้ก้อนนี้?")){
+debts.splice(i,1)
+saveAll()
+show()
+}
 }
 
 function deleteItem(i){
 if(confirm("ลบรายการนี้?")){
 data.splice(i,1)
-save()
+saveAll()
 show()
 }
 }
@@ -182,11 +195,9 @@ list.innerHTML=""
 data.forEach((d,i)=>{
 
 let dt=new Date(d.date)
-
 if(dt.getMonth()!=m || dt.getFullYear()!=y) return
 
 let text=(d.detail+d.category+d.amount).toLowerCase()
-
 if(!text.includes(keyword)) return
 
 if(d.type=="income") incomeTotal+=d.amount
@@ -202,8 +213,27 @@ ${d.detail}<br>
 <div class="${d.type}">
 ${formatMoney(d.amount)}
 <br>
-<button onclick="editItem(${i})">แก้ไข</button>
 <button onclick="deleteItem(${i})">ลบ</button>
+</div>
+</div>
+`
+})
+
+debts.forEach((d,i)=>{
+
+list.innerHTML+=`
+<div class="card list-item">
+<div>
+💳 ${d.name}
+<br>
+<small>${d.type}</small>
+<br>
+<small>คงเหลือ ${formatMoney(d.total-d.paid)}</small>
+</div>
+
+<div>
+<button onclick="payDebt(${i})">จ่าย</button>
+<button onclick="deleteDebt(${i})">ลบ</button>
 </div>
 </div>
 `
@@ -212,6 +242,7 @@ ${formatMoney(d.amount)}
 balance.innerText=formatMoney(incomeTotal-expenseTotal)
 income.innerText=formatMoney(incomeTotal)
 expense.innerText=formatMoney(expenseTotal)
+debt.innerText=formatMoney(totalDebt())
 
 drawChart(incomeTotal,expenseTotal)
 }
@@ -222,7 +253,7 @@ function drawChart(i,e){
 
 if(chart) chart.destroy()
 
-chart=new Chart(chartCanvas,{
+chart=new Chart(chart,{
 type:'doughnut',
 data:{
 labels:['รายรับ','รายจ่าย'],
@@ -246,9 +277,7 @@ a.download="expense.csv"
 a.click()
 }
 
-function toggleDark(){
-document.body.classList.toggle("dark")
-}
+function toggleDark(){document.body.classList.toggle("dark")}
 
 search.addEventListener("input",show)
 month.addEventListener("change",show)
