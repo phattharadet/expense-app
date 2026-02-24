@@ -7,21 +7,42 @@
 
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 
 <style>
 body{font-family:system-ui;background:#f5f7fa;margin:0}
 .dark{background:#121212;color:#fff}
 .container{max-width:520px;margin:auto;padding:15px}
+
+.logo{text-align:center;margin-bottom:10px}
+
 .card{background:#fff;padding:15px;border-radius:16px;margin-bottom:15px}
 .dark .card{background:#1e1e1e}
+
 .dashboard{display:flex;text-align:center}
 .dashboard div{flex:1}
+
 input,select{width:100%;padding:10px;margin:5px 0;border-radius:10px;border:1px solid #ddd}
+
 .list-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+
 .income{color:#2e7d32;font-weight:bold}
 .expense{color:#c62828;font-weight:bold}
+
 button{border:none;border-radius:10px;padding:6px 10px;margin-top:5px;cursor:pointer}
-.add-btn{position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:50%;font-size:30px;background:#4CAF50;color:#fff}
+
+.add-btn{
+position:fixed;
+bottom:20px;
+right:20px;
+width:60px;
+height:60px;
+border-radius:50%;
+font-size:30px;
+background:#34C759;
+color:#fff;
+}
+
 .app-version{text-align:center;font-size:12px;color:#999;margin:15px 0 90px}
 </style>
 </head>
@@ -30,6 +51,37 @@ button{border:none;border-radius:10px;padding:6px 10px;margin-top:5px;cursor:poi
 
 <div class="container">
 
+<!-- 🔥 LOGO WALLET -->
+<div class="logo">
+
+<svg width="95" height="95" viewBox="0 0 120 120">
+
+<defs>
+<linearGradient id="walletGrad" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#34C759"/>
+<stop offset="100%" stop-color="#30B0C7"/>
+</linearGradient>
+</defs>
+
+<!-- ตัวกระเป๋า -->
+<rect x="15" y="35" width="90" height="55" rx="18" fill="url(#walletGrad)"/>
+
+<!-- ฝาพับ -->
+<rect x="15" y="25" width="70" height="25" rx="12" fill="url(#walletGrad)"/>
+
+<!-- ช่องใส่บัตร -->
+<rect x="25" y="48" width="55" height="10" rx="5" fill="white" opacity="0.9"/>
+<rect x="25" y="63" width="45" height="10" rx="5" fill="white" opacity="0.7"/>
+
+<!-- กระดุม -->
+<circle cx="88" cy="62" r="6" fill="white"/>
+
+</svg>
+
+<div style="font-weight:600;font-size:18px">Expense Tracker</div>
+</div>
+
+<!-- DASHBOARD -->
 <div class="card dashboard">
 <div><small>คงเหลือ</small><h3 id="balance"></h3></div>
 <div><small>รายรับ</small><h3 id="income"></h3></div>
