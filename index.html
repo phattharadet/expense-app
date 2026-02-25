@@ -38,7 +38,6 @@ border-left:6px solid;
 .transferOut{border-color:#d32f2f}
 .cashToBank{border-color:#0097a7}
 .bankToBank{border-color:#1565c0}
-
 button{
 background:var(--main);
 color:#fff;
@@ -48,23 +47,13 @@ border-radius:10px;
 margin-top:6px;
 cursor:pointer;
 }
+.delete-btn{background:#e53935}
 input,select{
 width:100%;
 padding:10px;
 border-radius:10px;
 border:1px solid #ddd;
 margin-top:6px;
-}
-.add-btn{
-position:fixed;
-bottom:20px;
-right:20px;
-width:65px;
-height:65px;
-border-radius:50%;
-font-size:32px;
-background:var(--main);
-color:#fff;
 }
 </style>
 </head>
@@ -73,12 +62,12 @@ color:#fff;
 <div class="container">
 <div class="appbar">💰 Expense Tracker Pro</div>
 
+<!-- Dashboard -->
 <div class="card">
 <div><small>เงินสด</small><h3 id="cash"></h3></div>
 <div><small>รวมเงินธนาคาร</small><h3 id="totalBank"></h3></div>
 <div><small>รายรับรวม</small><h3 id="income"></h3></div>
 <div><small>รายจ่ายรวม</small><h3 id="expense"></h3></div>
-<div><small>หนี้คงเหลือ</small><h3 id="debt"></h3></div>
 </div>
 
 <!-- รายรับรายจ่าย -->
@@ -94,9 +83,9 @@ color:#fff;
 <button onclick="addIncomeExpense()">บันทึก</button>
 </div>
 
-<!-- จัดการบัญชี -->
+<!-- เพิ่มบัญชี -->
 <div class="card">
-<h3>🏦 บัญชีธนาคาร</h3>
+<h3>🏦 เพิ่มบัญชีธนาคาร</h3>
 <input id="bankName" placeholder="ชื่อบัญชี">
 <input id="bankAmount" type="number" placeholder="ยอดเริ่มต้น">
 <button onclick="addBank()">เพิ่มบัญชี</button>
@@ -109,18 +98,20 @@ color:#fff;
 <select id="actionType">
 <option value="deposit">เงินเข้าบัญชี</option>
 <option value="withdraw">ถอนเข้ากระเป๋าเงินสด</option>
-<option value="transferOut">โอนออกไปคนอื่น</option>
+<option value="transferOut">โอนออกให้คนอื่น</option>
 <option value="cashToBank">เงินสดเข้าบัญชี</option>
 <option value="bankToBank">โอนระหว่างบัญชี</option>
 </select>
+
 <select id="fromBank"></select>
 <select id="toBank"></select>
+
 <input id="actionAmount" type="number" placeholder="จำนวนเงิน">
 <input id="actionDetail" placeholder="รายละเอียด">
 <button onclick="handleAction()">ทำรายการ</button>
 </div>
 
-<!-- ประวัติ -->
+<!-- รายการทั้งหมด -->
 <div id="list"></div>
 
 </div>
@@ -155,6 +146,7 @@ save();show()
 }
 
 function addBank(){
+if(!bankName.value||!bankAmount.value) return alert("กรอกข้อมูลให้ครบ")
 banks.push({name:bankName.value,balance:+bankAmount.value})
 bankName.value=""
 bankAmount.value=""
@@ -199,7 +191,9 @@ data.push({
 date:new Date().toISOString().split("T")[0],
 detail:detail,
 amount:amt,
-type:t
+type:t,
+from:from,
+to:to
 })
 
 actionAmount.value=""
@@ -207,21 +201,73 @@ actionDetail.value=""
 save();show()
 }
 
+function deleteItem(i){
+
+if(!confirm("ลบรายการนี้?")) return
+
+let d = data[i]
+if(!d) return
+
+let amt = Number(d.amount) || 0
+
+// กัน index พัง
+let from = d.from !== undefined ? Number(d.from) : null
+let to   = d.to   !== undefined ? Number(d.to)   : null
+
+// คืนยอดเงินแบบปลอดภัย
+if(d.type === "deposit" && banks[from]){
+banks[from].balance -= amt
+}
+
+if(d.type === "withdraw" && banks[from]){
+banks[from].balance += amt
+cash -= amt
+}
+
+if(d.type === "transferOut" && banks[from]){
+banks[from].balance += amt
+}
+
+if(d.type === "cashToBank" && banks[to]){
+cash += amt
+banks[to].balance -= amt
+}
+
+if(d.type === "bankToBank" && banks[from] && banks[to]){
+banks[from].balance += amt
+banks[to].balance -= amt
+}
+
+// ลบจริง
+data.splice(i,1)
+
+save()
+show()
+}
+
 function show(){
 document.getElementById("cash").innerText=format(cash)
-document.getElementById("totalBank").innerText=format(banks.reduce((s,b)=>s+b.balance,0))
+document.getElementById("totalBank").innerText=format(
+banks.reduce((s,b)=>s+b.balance,0)
+)
 
 let inc=0,exp=0
 list.innerHTML=""
 
-data.forEach(d=>{
-if(d.type=="income"||d.type=="deposit"||d.type=="cashToBank") inc+=d.amount
-if(d.type=="expense"||d.type=="withdraw"||d.type=="transferOut") exp+=d.amount
+data.forEach((d,i)=>{
+if(["income","deposit","cashToBank"].includes(d.type)) inc+=d.amount
+if(["expense","withdraw","transferOut"].includes(d.type)) exp+=d.amount
 
 list.innerHTML+=`
 <div class="card list-item ${d.type}">
-<div>${d.detail}<br><small>${d.date}</small></div>
-<div>${format(d.amount)}</div>
+<div>
+${d.detail}<br>
+<small>${d.date}</small>
+</div>
+<div align="right">
+${format(d.amount)}<br>
+<button class="delete-btn" onclick="deleteItem(${i})">ลบ</button>
+</div>
 </div>`
 })
 
