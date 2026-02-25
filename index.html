@@ -5,14 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Expense Tracker</title>
 
-<!-- ✅ ICON รองรับทุกระบบ -->
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
 <meta name="theme-color" content="#34C759">
 
-<!-- ✅ iOS PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Expense Tracker">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -21,7 +19,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 :root{
 --main:#34C759;
 --bg:#f5f7fa;
@@ -36,14 +33,12 @@ margin:0;
 color:var(--text);
 }
 
-/* 🌙 DARK MODE */
 .dark{
 --bg:#121212;
 --card:#1e1e1e;
 --text:#fff;
 }
 
-/* 🔥 APPBAR */
 .appbar{
 background:linear-gradient(135deg,#34C759,#30B0C7);
 color:#fff;
@@ -55,10 +50,8 @@ border-radius:0 0 20px 20px;
 box-shadow:0 4px 12px rgba(0,0,0,.2);
 }
 
-/* CONTAINER */
 .container{max-width:520px;margin:auto;padding:15px}
 
-/* CARD */
 .card{
 background:var(--card);
 border-radius:18px;
@@ -67,26 +60,16 @@ margin-bottom:15px;
 box-shadow:0 6px 16px rgba(0,0,0,.08);
 }
 
-/* DASHBOARD */
-.dashboard div h3{margin:5px 0 0}
-
-/* LIST */
 .list-item{
 display:flex;
 justify-content:space-between;
 align-items:center;
 border-left:6px solid;
-transition:.2s;
-}
-
-.list-item:hover{
-transform:scale(1.02);
 }
 
 .income{border-color:#2e7d32}
 .expense{border-color:#c62828}
 
-/* BUTTON */
 button{
 background:var(--main);
 color:#fff;
@@ -97,7 +80,6 @@ font-weight:600;
 cursor:pointer;
 }
 
-/* FAB */
 .add-btn{
 position:fixed;
 bottom:20px;
@@ -111,7 +93,6 @@ color:#fff;
 box-shadow:0 6px 16px rgba(0,0,0,.3);
 }
 
-/* INPUT */
 input,select{
 width:100%;
 padding:12px;
@@ -121,42 +102,23 @@ margin-top:6px;
 background:transparent;
 color:var(--text);
 }
-
-canvas{margin-top:10px}
-
 </style>
 </head>
 
 <body>
 <div class="container">
 <div class="appbar">💰 Expense Tracker</div>
-<!-- 🔥 LOGO WALLET -->
-<div class="logo">
-<!-- SVG เดิมอยู่ครบ -->
-<svg width="95" height="95" viewBox="0 0 120 120">
-<defs>
-<linearGradient id="walletGrad" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0%" stop-color="#34C759"/>
-<stop offset="100%" stop-color="#30B0C7"/>
-</linearGradient>
-</defs>
-<rect x="15" y="35" width="90" height="55" rx="18" fill="url(#walletGrad)"/>
-<rect x="15" y="25" width="70" height="25" rx="12" fill="url(#walletGrad)"/>
-<rect x="25" y="48" width="55" height="10" rx="5" fill="white" opacity="0.9"/>
-<rect x="25" y="63" width="45" height="10" rx="5" fill="white" opacity="0.7"/>
-<circle cx="88" cy="62" r="6" fill="white"/>
-</svg>
-<div style="font-weight:600;font-size:18px">Expense Tracker</div>
-</div>
 
 <!-- DASHBOARD -->
-<div class="card dashboard">
-<div><span class="material-icons">account_balance_wallet</span><br><small>คงเหลือ</small><h3 id="balance"></h3></div>
-<div><span class="material-icons">trending_up</span><br><small>รายรับ</small><h3 id="income"></h3></div>
-<div><span class="material-icons">trending_down</span><br><small>รายจ่าย</small><h3 id="expense"></h3></div>
-<div><span class="material-icons">credit_card</span><br><small>หนี้</small><h3 id="debt" style="color:#ef6c00"></h3></div>
+<div class="card">
+<div><small>คงเหลือ</small><h3 id="balance"></h3></div>
+<div><small>เงินฝากธนาคาร</small><h3 id="bankTotal" style="color:#1976d2"></h3></div>
+<div><small>รายรับ</small><h3 id="income"></h3></div>
+<div><small>รายจ่าย</small><h3 id="expense"></h3></div>
+<div><small>หนี้</small><h3 id="debt" style="color:#ef6c00"></h3></div>
 </div>
 
+<!-- เลือกเดือน -->
 <div class="card">
 <select id="month"></select>
 <select id="year"></select>
@@ -164,6 +126,7 @@ canvas{margin-top:10px}
 <canvas id="chart"></canvas>
 </div>
 
+<!-- เพิ่มรายการ -->
 <div class="card">
 <input type="date" id="date">
 <input type="text" id="detail" placeholder="รายละเอียด">
@@ -183,100 +146,99 @@ canvas{margin-top:10px}
 <option>อื่น ๆ</option>
 </select>
 
-<button onclick="exportCSV()">Export Excel</button>
-<button onclick="toggleDark()">🌙 Dark mode</button>
+<select id="account"></select>
+
+<button onclick="addItem()">บันทึกรายการ</button>
 </div>
 
+<!-- เพิ่มบัญชีธนาคาร -->
 <div class="card">
-<h4>เพิ่มหนี้</h4>
-
-<select id="debtType">
-<option>บัตรเครดิต</option>
-<option>ผ่อนโทรศัพท์</option>
-<option>ผ่อนรถ</option>
-<option>เงินกู้</option>
-<option>อื่น ๆ</option>
-</select>
-
-<input type="text" id="debtName" placeholder="ชื่อหนี้">
-<input type="number" id="debtTotal" placeholder="ยอดหนี้ทั้งหมด">
-
-<button onclick="addDebt()">บันทึกหนี้</button>
+<h4>เพิ่มบัญชีธนาคาร</h4>
+<input type="text" id="bankName" placeholder="ชื่อบัญชี">
+<input type="number" id="bankBalance" placeholder="ยอดเริ่มต้น">
+<button onclick="addBank()">เพิ่มบัญชี</button>
 </div>
 
 <div id="list"></div>
-<div class="app-version" id="appVersion"></div>
 </div>
 
-<button class="add-btn" onclick="addItem()">+</button>
-
 <script>
-const APP_VERSION="2.2.0"
-appVersion.innerText="ver. "+APP_VERSION
-
 let data=JSON.parse(localStorage.getItem("data"))||[]
 let debts=JSON.parse(localStorage.getItem("debts"))||[]
-
-const months=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]
-
-months.forEach((m,i)=>month.innerHTML+=`<option value="${i}">${m}</option>`)
-for(let y=2565;y<=2575;y++){year.innerHTML+=`<option>${y}</option>`}
-
-month.value=new Date().getMonth()
-year.value=new Date().getFullYear()+543
+let banks=JSON.parse(localStorage.getItem("banks"))||[]
 
 function saveAll(){
 localStorage.setItem("data",JSON.stringify(data))
 localStorage.setItem("debts",JSON.stringify(debts))
+localStorage.setItem("banks",JSON.stringify(banks))
 }
 
 function formatMoney(n){return n.toLocaleString()+" บาท"}
-function formatDate(d){return new Date(d).toLocaleDateString("th-TH")}
 
-function totalDebt(){
-return debts.reduce((sum,d)=>sum+(d.total-d.paid),0)
+function addBank(){
+if(!bankName.value||!bankBalance.value){alert("กรอกข้อมูลให้ครบ");return}
+banks.push({name:bankName.value,balance:+bankBalance.value})
+saveAll(); show()
+bankName.value=""; bankBalance.value=""
+}
+
+function updateAccountDropdown(){
+account.innerHTML=""
+banks.forEach((b,i)=>{
+account.innerHTML+=`<option value="${i}">${b.name}</option>`
+})
 }
 
 function addItem(){
 if(!date.value||!detail.value||!amount.value){alert("กรอกข้อมูลให้ครบ");return}
-data.push({date:date.value,detail:detail.value,amount:+amount.value,type:type.value,category:category.value})
+let accIndex=account.value
+let amt=+amount.value
+
+if(type.value=="expense"){
+if(banks[accIndex].balance<amt){
+alert("เงินในบัญชีไม่พอ");return
+}
+banks[accIndex].balance-=amt
+}else{
+banks[accIndex].balance+=amt
+}
+
+data.push({
+date:date.value,
+detail:detail.value,
+amount:amt,
+type:type.value,
+category:category.value,
+account:accIndex
+})
+
 saveAll(); show()
 date.value=""; detail.value=""; amount.value=""
 }
 
-function addDebt(){
-if(!debtName.value||!debtTotal.value){alert("กรอกข้อมูลให้ครบ");return}
-debts.push({name:debtName.value,type:debtType.value,total:+debtTotal.value,paid:0})
-saveAll(); show()
-debtName.value=""; debtTotal.value=""
-}
-
-function payDebt(i){
-let pay=prompt("จำนวนเงินที่จ่าย")
-if(pay){debts[i].paid+=+pay; saveAll(); show()}
-}
-
-function deleteDebt(i){
-if(confirm("ลบหนี้ก้อนนี้?")){debts.splice(i,1); saveAll(); show()}
-}
-
 function deleteItem(i){
-if(confirm("ลบรายการนี้?")){data.splice(i,1); saveAll(); show()}
+let d=data[i]
+let acc=d.account
+if(d.type=="expense"){
+banks[acc].balance+=d.amount
+}else{
+banks[acc].balance-=d.amount
+}
+data.splice(i,1)
+saveAll(); show()
+}
+
+function totalBank(){
+return banks.reduce((s,b)=>s+b.balance,0)
 }
 
 function show(){
-let m=month.value
-let y=year.value-543
-let keyword=search.value.trim().toLowerCase()
+updateAccountDropdown()
 
 let incomeTotal=0,expenseTotal=0
 list.innerHTML=""
 
 data.forEach((d,i)=>{
-let dt=new Date(d.date)
-if(dt.getMonth()!=m || dt.getFullYear()!=y) return
-let text=(d.detail+d.category+d.amount).toLowerCase()
-if(!text.includes(keyword)) return
 if(d.type=="income") incomeTotal+=d.amount
 else expenseTotal+=d.amount
 
@@ -284,9 +246,8 @@ list.innerHTML+=`
 <div class="card list-item ${d.type}">
 <div>
 <b>${d.detail}</b><br>
-<small>${d.category} | ${formatDate(d.date)}</small>
+<small>${banks[d.account]?.name||"-"} | ${d.category}</small>
 </div>
-
 <div align="right">
 ${formatMoney(d.amount)}
 <br>
@@ -295,57 +256,21 @@ ${formatMoney(d.amount)}
 </div>`
 })
 
-debts.forEach((d,i)=>{
+banks.forEach((b,i)=>{
 list.innerHTML+=`
-<div class="card list-item">
-<div>
-💳 ${d.name}<br>
-<small>${d.type}</small><br>
-<small>คงเหลือ ${formatMoney(d.total-d.paid)}</small>
-</div>
-<div>
-<button onclick="payDebt(${i})">จ่าย</button>
-<button onclick="deleteDebt(${i})">ลบ</button>
-</div>
+<div class="card">
+🏦 ${b.name}<br>
+คงเหลือ ${formatMoney(b.balance)}
 </div>`
 })
 
 balance.innerText=formatMoney(incomeTotal-expenseTotal)
 income.innerText=formatMoney(incomeTotal)
 expense.innerText=formatMoney(expenseTotal)
-debt.innerText=formatMoney(totalDebt())
-
-drawChart(incomeTotal,expenseTotal)
+bankTotal.innerText=formatMoney(totalBank())
 }
-
-let chart
-
-function drawChart(i,e){
-if(chart) chart.destroy()
-chart=new Chart(document.getElementById("chart"),{
-type:'doughnut',
-data:{labels:['รายรับ','รายจ่าย'],datasets:[{data:[i,e]}]}
-})
-}
-
-function exportCSV(){
-let csv="วันที่,รายการ,หมวดหมู่,ประเภท,จำนวน\n"
-data.forEach(d=>{csv+=`${d.date},${d.detail},${d.category},${d.type},${d.amount}\n`})
-let blob=new Blob([csv])
-let a=document.createElement("a")
-a.href=URL.createObjectURL(blob)
-a.download="expense.csv"
-a.click()
-}
-
-function toggleDark(){document.body.classList.toggle("dark")}
-
-search.addEventListener("input",show)
-month.addEventListener("change",show)
-year.addEventListener("change",show)
 
 show()
 </script>
-
 </body>
 </html>
