@@ -3,55 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Expense Tracker</title>
-
-<link rel="icon" href="favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="manifest" href="site.webmanifest">
-<meta name="theme-color" content="#34C759">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Expense Tracker">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Expense Tracker Pro</title>
 
 <style>
 :root{
 --main:#34C759;
 --bg:#f5f7fa;
 --card:#ffffff;
---text:#000;
 }
-
-body{
-font-family:system-ui;
-background:var(--bg);
-margin:0;
-color:var(--text);
-}
-
-.dark{
---bg:#121212;
---card:#1e1e1e;
---text:#fff;
-}
-
+body{font-family:system-ui;background:var(--bg);margin:0}
 .appbar{
 background:linear-gradient(135deg,#34C759,#30B0C7);
-color:#fff;
-padding:18px;
-font-size:20px;
-font-weight:600;
-text-align:center;
-border-radius:0 0 20px 20px;
-box-shadow:0 4px 12px rgba(0,0,0,.2);
+color:#fff;padding:18px;font-size:20px;font-weight:600;
+text-align:center;border-radius:0 0 20px 20px;
 }
-
 .container{max-width:520px;margin:auto;padding:15px}
-
 .card{
 background:var(--card);
 border-radius:18px;
@@ -59,16 +25,19 @@ padding:16px;
 margin-bottom:15px;
 box-shadow:0 6px 16px rgba(0,0,0,.08);
 }
-
 .list-item{
 display:flex;
 justify-content:space-between;
 align-items:center;
 border-left:6px solid;
 }
-
 .income{border-color:#2e7d32}
 .expense{border-color:#c62828}
+.deposit{border-color:#00c853}
+.withdraw{border-color:#ff9800}
+.transferOut{border-color:#d32f2f}
+.cashToBank{border-color:#0097a7}
+.bankToBank{border-color:#1565c0}
 
 button{
 background:var(--main);
@@ -76,10 +45,16 @@ color:#fff;
 border:none;
 padding:8px 12px;
 border-radius:10px;
-font-weight:600;
+margin-top:6px;
 cursor:pointer;
 }
-
+input,select{
+width:100%;
+padding:10px;
+border-radius:10px;
+border:1px solid #ddd;
+margin-top:6px;
+}
 .add-btn{
 position:fixed;
 bottom:20px;
@@ -90,184 +65,181 @@ border-radius:50%;
 font-size:32px;
 background:var(--main);
 color:#fff;
-box-shadow:0 6px 16px rgba(0,0,0,.3);
-}
-
-input,select{
-width:100%;
-padding:12px;
-border-radius:12px;
-border:1px solid #ddd;
-margin-top:6px;
-background:transparent;
-color:var(--text);
 }
 </style>
 </head>
 
 <body>
 <div class="container">
-<div class="appbar">💰 Expense Tracker</div>
+<div class="appbar">💰 Expense Tracker Pro</div>
 
-<!-- DASHBOARD -->
 <div class="card">
-<div><small>คงเหลือ</small><h3 id="balance"></h3></div>
-<div><small>เงินฝากธนาคาร</small><h3 id="bankTotal" style="color:#1976d2"></h3></div>
-<div><small>รายรับ</small><h3 id="income"></h3></div>
-<div><small>รายจ่าย</small><h3 id="expense"></h3></div>
-<div><small>หนี้</small><h3 id="debt" style="color:#ef6c00"></h3></div>
+<div><small>เงินสด</small><h3 id="cash"></h3></div>
+<div><small>รวมเงินธนาคาร</small><h3 id="totalBank"></h3></div>
+<div><small>รายรับรวม</small><h3 id="income"></h3></div>
+<div><small>รายจ่ายรวม</small><h3 id="expense"></h3></div>
+<div><small>หนี้คงเหลือ</small><h3 id="debt"></h3></div>
 </div>
 
-<!-- เลือกเดือน -->
+<!-- รายรับรายจ่าย -->
 <div class="card">
-<select id="month"></select>
-<select id="year"></select>
-<input type="text" id="search" placeholder="ค้นหา...">
-<canvas id="chart"></canvas>
-</div>
-
-<!-- เพิ่มรายการ -->
-<div class="card">
+<h3>💰 บันทึกรายรับรายจ่าย</h3>
 <input type="date" id="date">
 <input type="text" id="detail" placeholder="รายละเอียด">
 <input type="number" id="amount" placeholder="จำนวนเงิน">
-
 <select id="type">
 <option value="income">รายรับ</option>
 <option value="expense">รายจ่าย</option>
 </select>
-
-<select id="category">
-<option>อาหาร</option>
-<option>เดินทาง</option>
-<option>ช้อปปิ้ง</option>
-<option>บิล</option>
-<option>เงินเดือน</option>
-<option>อื่น ๆ</option>
-</select>
-
-<select id="account"></select>
-
-<button onclick="addItem()">บันทึกรายการ</button>
+<button onclick="addIncomeExpense()">บันทึก</button>
 </div>
 
-<!-- เพิ่มบัญชีธนาคาร -->
+<!-- จัดการบัญชี -->
 <div class="card">
-<h4>เพิ่มบัญชีธนาคาร</h4>
-<input type="text" id="bankName" placeholder="ชื่อบัญชี">
-<input type="number" id="bankBalance" placeholder="ยอดเริ่มต้น">
+<h3>🏦 บัญชีธนาคาร</h3>
+<input id="bankName" placeholder="ชื่อบัญชี">
+<input id="bankAmount" type="number" placeholder="ยอดเริ่มต้น">
 <button onclick="addBank()">เพิ่มบัญชี</button>
+<div id="bankList"></div>
 </div>
 
+<!-- จัดการเงิน -->
+<div class="card">
+<h3>🔄 จัดการเงิน</h3>
+<select id="actionType">
+<option value="deposit">เงินเข้าบัญชี</option>
+<option value="withdraw">ถอนเข้ากระเป๋าเงินสด</option>
+<option value="transferOut">โอนออกไปคนอื่น</option>
+<option value="cashToBank">เงินสดเข้าบัญชี</option>
+<option value="bankToBank">โอนระหว่างบัญชี</option>
+</select>
+<select id="fromBank"></select>
+<select id="toBank"></select>
+<input id="actionAmount" type="number" placeholder="จำนวนเงิน">
+<input id="actionDetail" placeholder="รายละเอียด">
+<button onclick="handleAction()">ทำรายการ</button>
+</div>
+
+<!-- ประวัติ -->
 <div id="list"></div>
+
 </div>
 
 <script>
 let data=JSON.parse(localStorage.getItem("data"))||[]
-let debts=JSON.parse(localStorage.getItem("debts"))||[]
 let banks=JSON.parse(localStorage.getItem("banks"))||[]
+let cash=JSON.parse(localStorage.getItem("cash"))||0
 
-function saveAll(){
+function save(){
 localStorage.setItem("data",JSON.stringify(data))
-localStorage.setItem("debts",JSON.stringify(debts))
 localStorage.setItem("banks",JSON.stringify(banks))
+localStorage.setItem("cash",JSON.stringify(cash))
 }
 
-function formatMoney(n){return n.toLocaleString()+" บาท"}
+function format(n){return n.toLocaleString()+" บาท"}
 
-function addBank(){
-if(!bankName.value||!bankBalance.value){alert("กรอกข้อมูลให้ครบ");return}
-banks.push({name:bankName.value,balance:+bankBalance.value})
-saveAll(); show()
-bankName.value=""; bankBalance.value=""
-}
-
-function updateAccountDropdown(){
-account.innerHTML=""
-banks.forEach((b,i)=>{
-account.innerHTML+=`<option value="${i}">${b.name}</option>`
-})
-}
-
-function addItem(){
-if(!date.value||!detail.value||!amount.value){alert("กรอกข้อมูลให้ครบ");return}
-let accIndex=account.value
-let amt=+amount.value
-
-if(type.value=="expense"){
-if(banks[accIndex].balance<amt){
-alert("เงินในบัญชีไม่พอ");return
-}
-banks[accIndex].balance-=amt
-}else{
-banks[accIndex].balance+=amt
-}
+function addIncomeExpense(){
+if(!date.value||!detail.value||!amount.value) return alert("กรอกข้อมูลให้ครบ")
 
 data.push({
 date:date.value,
 detail:detail.value,
-amount:amt,
-type:type.value,
-category:category.value,
-account:accIndex
+amount:+amount.value,
+type:type.value
 })
 
-saveAll(); show()
-date.value=""; detail.value=""; amount.value=""
+date.value=""
+detail.value=""
+amount.value=""
+save();show()
 }
 
-function deleteItem(i){
-let d=data[i]
-let acc=d.account
-if(d.type=="expense"){
-banks[acc].balance+=d.amount
-}else{
-banks[acc].balance-=d.amount
-}
-data.splice(i,1)
-saveAll(); show()
+function addBank(){
+banks.push({name:bankName.value,balance:+bankAmount.value})
+bankName.value=""
+bankAmount.value=""
+save();show()
 }
 
-function totalBank(){
-return banks.reduce((s,b)=>s+b.balance,0)
+function handleAction(){
+let t=actionType.value
+let amt=+actionAmount.value
+let from=fromBank.value
+let to=toBank.value
+let detail=actionDetail.value||t
+
+if(!amt) return alert("กรอกจำนวนเงิน")
+
+if(t=="deposit") banks[from].balance+=amt
+
+if(t=="withdraw"){
+if(banks[from].balance<amt) return alert("เงินไม่พอ")
+banks[from].balance-=amt
+cash+=amt
+}
+
+if(t=="transferOut"){
+if(banks[from].balance<amt) return alert("เงินไม่พอ")
+banks[from].balance-=amt
+}
+
+if(t=="cashToBank"){
+if(cash<amt) return alert("เงินสดไม่พอ")
+cash-=amt
+banks[to].balance+=amt
+}
+
+if(t=="bankToBank"){
+if(banks[from].balance<amt) return alert("เงินไม่พอ")
+banks[from].balance-=amt
+banks[to].balance+=amt
+}
+
+data.push({
+date:new Date().toISOString().split("T")[0],
+detail:detail,
+amount:amt,
+type:t
+})
+
+actionAmount.value=""
+actionDetail.value=""
+save();show()
 }
 
 function show(){
-updateAccountDropdown()
+document.getElementById("cash").innerText=format(cash)
+document.getElementById("totalBank").innerText=format(banks.reduce((s,b)=>s+b.balance,0))
 
-let incomeTotal=0,expenseTotal=0
+let inc=0,exp=0
 list.innerHTML=""
 
-data.forEach((d,i)=>{
-if(d.type=="income") incomeTotal+=d.amount
-else expenseTotal+=d.amount
+data.forEach(d=>{
+if(d.type=="income"||d.type=="deposit"||d.type=="cashToBank") inc+=d.amount
+if(d.type=="expense"||d.type=="withdraw"||d.type=="transferOut") exp+=d.amount
 
 list.innerHTML+=`
 <div class="card list-item ${d.type}">
-<div>
-<b>${d.detail}</b><br>
-<small>${banks[d.account]?.name||"-"} | ${d.category}</small>
-</div>
-<div align="right">
-${formatMoney(d.amount)}
-<br>
-<button onclick="deleteItem(${i})">ลบ</button>
-</div>
+<div>${d.detail}<br><small>${d.date}</small></div>
+<div>${format(d.amount)}</div>
 </div>`
 })
 
+document.getElementById("income").innerText=format(inc)
+document.getElementById("expense").innerText=format(exp)
+
+bankList.innerHTML=""
+fromBank.innerHTML=""
+toBank.innerHTML=""
 banks.forEach((b,i)=>{
-list.innerHTML+=`
+bankList.innerHTML+=`
 <div class="card">
-🏦 ${b.name}<br>
-คงเหลือ ${formatMoney(b.balance)}
+<b>${b.name}</b><br>
+ยอดเงิน: ${format(b.balance)}
 </div>`
+fromBank.innerHTML+=`<option value="${i}">${b.name}</option>`
+toBank.innerHTML+=`<option value="${i}">${b.name}</option>`
 })
-
-balance.innerText=formatMoney(incomeTotal-expenseTotal)
-income.innerText=formatMoney(incomeTotal)
-expense.innerText=formatMoney(expenseTotal)
-bankTotal.innerText=formatMoney(totalBank())
 }
 
 show()
