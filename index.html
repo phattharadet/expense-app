@@ -3,53 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bank Manager Pro ULTRA MAX</title>
+<title>Expense Tracker</title>
 
 <style>
 body{font-family:system-ui;background:#f5f7fa;margin:0}
-.container{max-width:520px;margin:auto;padding:14px}
-.card{background:#fff;padding:14px;border-radius:16px;margin-bottom:12px;box-shadow:0 4px 10px rgba(0,0,0,.08)}
-button{background:#ff9800;color:#fff;border:none;padding:7px 10px;border-radius:10px;margin-top:6px;font-size:13px}
-.delete{background:#e53935}
-input,select{width:100%;padding:9px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
-.item{padding:10px;border-left:6px solid;margin-top:8px;background:#fff;border-radius:12px}
-.income{border-color:#2e7d32}
-.expense{border-color:#c62828}
-.transfer{border-color:#1565c0}
-.debtPay{border-color:#6a1b9a}
-h3{margin:4px 0}
+.container{max-width:520px;margin:auto;padding:15px}
+.card{background:#fff;padding:15px;border-radius:16px;margin-bottom:15px}
+.dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:center}
+input,select,button{width:100%;padding:10px;margin:5px 0;border-radius:10px;border:1px solid #ddd}
+.list-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.add-btn{position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:50%;font-size:30px;background:#4CAF50;color:#fff;border:none}
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
-<div class="card">
-เงินสด: <b id="cashShow"></b><br>
-เงินในธนาคาร: <b id="bankShow"></b><br>
-หนี้คงเหลือ: <b id="debtShow"></b>
-</div>
+<h3 style="text-align:center">💼 Expense Tracker</h3>
+
+<div class="card dashboard" id="dashboard"></div>
 
 <div class="card">
-<h3>💵 เงินสด</h3>
-<input type="number" id="cashInput">
-<button onclick="addCash()">เพิ่ม</button>
-<button onclick="reduceCash()">ลด</button>
-<button onclick="setCash()">ตั้งยอด</button>
-</div>
+<input id="newAccount" placeholder="เพิ่มบัญชีใหม่">
+<button onclick="addAccount()">เพิ่มบัญชี</button>
 
-<div class="card">
-<h3>🏦 เพิ่มบัญชีธนาคาร</h3>
-<input id="bankName" placeholder="ชื่อบัญชี">
-<input type="number" id="bankBalance" placeholder="ยอดเงิน">
-<button onclick="addBank()">เพิ่มบัญชี</button>
-<div id="bankList"></div>
-</div>
+<select id="accountSelect"></select>
 
-<div class="card">
-<h3>💸 รายรับรายจ่าย</h3>
 <input type="date" id="date">
-<input id="detail" placeholder="รายละเอียด">
+<input type="text" id="detail" placeholder="รายละเอียด">
 <input type="number" id="amount" placeholder="จำนวนเงิน">
 
 <select id="type">
@@ -57,209 +39,152 @@ h3{margin:4px 0}
 <option value="expense">รายจ่าย</option>
 </select>
 
-<select id="wallet"></select>
-
-<button onclick="addTransaction()">บันทึก</button>
+<button onclick="addItem()">บันทึก</button>
 </div>
 
 <div class="card">
-<h3>📄 เพิ่มหนี้</h3>
+<h4>ถอนเงิน</h4>
+<select id="withdrawAccount"></select>
+<input type="number" id="withdrawAmount" placeholder="จำนวนเงิน">
+<button onclick="withdraw()">ถอนเงิน</button>
+</div>
+
+<div class="card">
+<h4>เพิ่มหนี้</h4>
 <input id="debtName" placeholder="ชื่อหนี้">
-<input type="number" id="debtAmount" placeholder="จำนวนเงิน">
+<input type="number" id="debtTotal" placeholder="ยอดหนี้">
 <button onclick="addDebt()">เพิ่มหนี้</button>
-<div id="debtList"></div>
 </div>
 
-<div class="card">
-<h3>📜 รายการทั้งหมด</h3>
-
-<h4>💸 รายรับ</h4>
-<div id="incomeList"></div>
-
-<h4>🧾 รายจ่าย</h4>
-<div id="expenseList"></div>
-
-<h4>🏦 ธุรกรรมเงิน</h4>
-<div id="transferList"></div>
-
-<h4>📄 จ่ายหนี้</h4>
-<div id="debtPayList"></div>
+<div id="list"></div>
 
 </div>
 
-</div>
+<button class="add-btn" onclick="addItem()">+</button>
 
 <script>
 
-let cash=+localStorage.getItem("cash")||0
-let banks=JSON.parse(localStorage.getItem("banks"))||[]
-let debts=JSON.parse(localStorage.getItem("debts"))||[]
 let data=JSON.parse(localStorage.getItem("data"))||[]
+let debts=JSON.parse(localStorage.getItem("debts"))||[]
+let accounts=JSON.parse(localStorage.getItem("accounts"))||["เงินสด"]
 
 function save(){
-localStorage.setItem("cash",cash)
-localStorage.setItem("banks",JSON.stringify(banks))
-localStorage.setItem("debts",JSON.stringify(debts))
 localStorage.setItem("data",JSON.stringify(data))
+localStorage.setItem("debts",JSON.stringify(debts))
+localStorage.setItem("accounts",JSON.stringify(accounts))
 }
 
-function format(n){return (n||0).toLocaleString()+" บาท"}
-
-function updateWallet(){
-wallet.innerHTML='<option value="cash">เงินสด</option>'
-banks.forEach((b,i)=>{
-wallet.innerHTML+=`<option value="bank-${i}">${b.name}</option>`
+function renderAccounts(){
+accountSelect.innerHTML=""
+withdrawAccount.innerHTML=""
+accounts.forEach(a=>{
+accountSelect.innerHTML+=`<option>${a}</option>`
+withdrawAccount.innerHTML+=`<option>${a}</option>`
 })
 }
 
-function render(){
-
-cashShow.innerText=format(cash)
-bankShow.innerText=format(banks.reduce((s,b)=>s+b.balance,0))
-debtShow.innerText=format(debts.reduce((s,d)=>s+d.amount,0))
-
-updateWallet()
-
-bankList.innerHTML=banks.map((b,i)=>`
-<div class="item">
-${b.name} : ${format(b.balance)}
-<br>
-<button onclick="editBank(${i})">ตั้งยอด</button>
-<button class="delete" onclick="deleteBank(${i})">ลบ</button>
-</div>`).join("")
-
-debtList.innerHTML=debts.map((d,i)=>`
-<div class="item">
-${d.name} : ${format(d.amount)}
-<input type="number" id="pay${i}" placeholder="จำนวนที่จ่าย">
-<select id="payFrom${i}">${wallet.innerHTML}</select>
-<button onclick="payDebt(${i})">จ่ายหนี้</button>
-</div>`).join("")
-
-incomeList.innerHTML=""
-expenseList.innerHTML=""
-transferList.innerHTML=""
-debtPayList.innerHTML=""
-
-data.slice().reverse().forEach((d,idx)=>{
-
-let realIndex=data.length-1-idx
-
-let html=`
-<div class="item ${d.type}">
-<b>${d.detail}</b><br>
-${d.date} | ${d.wallet}<br>
-${d.type=="income"?"+":"-"}${format(d.amount)}
-<button class="delete" onclick="deleteItem(${realIndex})">ลบ</button>
-</div>
-`
-
-if(d.type=="income") incomeList.innerHTML+=html
-else if(d.type=="expense") expenseList.innerHTML+=html
-else if(d.type=="debtPay") debtPayList.innerHTML+=html
-else transferList.innerHTML+=html
-
-})
-
+function addAccount(){
+if(!newAccount.value)return
+accounts.push(newAccount.value)
+newAccount.value=""
+save()
+renderAccounts()
+show()
 }
 
-function addCash(){let v=+cashInput.value;if(!v)return;cash+=v;cashInput.value="";save();render()}
-function reduceCash(){let v=+cashInput.value;if(!v||cash<v)return;cash-=v;cashInput.value="";save();render()}
-function setCash(){cash=+cashInput.value||0;cashInput.value="";save();render()}
-
-function addBank(){
-if(!bankName.value||!bankBalance.value)return
-banks.push({name:bankName.value,balance:+bankBalance.value})
-bankName.value="";bankBalance.value=""
-save();render()
-}
-
-function editBank(i){
-let val=prompt("ตั้งยอดใหม่",banks[i].balance)
-if(val!==null){banks[i].balance=+val;save();render()}
-}
-
-function deleteBank(i){
-if(confirm("ลบบัญชี?")){banks.splice(i,1);save();render()}
-}
-
-function addTransaction(){
-
-let amt=+amount.value
-let w=wallet.value
-let name=wallet.options[wallet.selectedIndex].text
-
-if(!detail.value||!amt)return alert("กรอกข้อมูล")
-
-if(type.value=="income"){
-if(w=="cash")cash+=amt
-else banks[w.split("-")[1]].balance+=amt
-}else{
-if(w=="cash"){if(cash<amt)return alert("เงินสดไม่พอ");cash-=amt}
-else{
-let id=w.split("-")[1]
-if(banks[id].balance<amt)return alert("เงินไม่พอ")
-banks[id].balance-=amt
-}
-}
-
+function addItem(){
 data.push({
-date:date.value||new Date().toISOString().split("T")[0],
+date:date.value,
 detail:detail.value,
-amount:amt,
+amount:+amount.value,
 type:type.value,
-wallet:name
+account:accountSelect.value
 })
+save()
+show()
+}
 
-detail.value="";amount.value=""
-save();render()
+function withdraw(){
+let acc=withdrawAccount.value
+let amt=+withdrawAmount.value
+
+data.push({date:new Date().toISOString().slice(0,10),detail:"ถอนเงิน",amount:amt,type:"expense",account:acc})
+data.push({date:new Date().toISOString().slice(0,10),detail:"เงินสดจาก "+acc,amount:amt,type:"income",account:"เงินสด"})
+
+save()
+show()
+withdrawAmount.value=""
 }
 
 function addDebt(){
-if(!debtName.value||!debtAmount.value)return
-debts.push({name:debtName.value,amount:+debtAmount.value})
-debtName.value="";debtAmount.value=""
-save();render()
+debts.push({name:debtName.value,total:+debtTotal.value,paid:0})
+save()
+show()
 }
 
 function payDebt(i){
-
-let amt=+document.getElementById("pay"+i).value
-let w=document.getElementById("payFrom"+i).value
-let name=document.getElementById("payFrom"+i).options[
-document.getElementById("payFrom"+i).selectedIndex].text
-
-if(!amt)return
-
-if(w=="cash"){if(cash<amt)return alert("เงินสดไม่พอ");cash-=amt}
-else{
-let id=w.split("-")[1]
-if(banks[id].balance<amt)return alert("เงินไม่พอ")
-banks[id].balance-=amt
+let pay=prompt("จำนวนเงินที่จ่าย")
+debts[i].paid+=+pay
+if(debts[i].paid>=debts[i].total)debts.splice(i,1)
+save()
+show()
 }
 
-debts[i].amount-=amt
-if(debts[i].amount<=0)debts.splice(i,1)
+function totalDebt(){
+return debts.reduce((s,d)=>s+(d.total-d.paid),0)
+}
 
-data.push({
-date:new Date().toISOString().split("T")[0],
-detail:"จ่ายหนี้",
-amount:amt,
-type:"debtPay",
-wallet:name
+function formatMoney(n){return n.toLocaleString()+" บาท"}
+
+function show(){
+
+let balance={}
+
+accounts.forEach(a=>balance[a]=0)
+
+data.forEach(d=>{
+if(d.type=="income") balance[d.account]+=d.amount
+else balance[d.account]-=d.amount
 })
 
-save();render()
+dashboard.innerHTML=""
+
+accounts.forEach(a=>{
+dashboard.innerHTML+=`
+<div class="card">
+<small>${a}</small>
+<h3>${formatMoney(balance[a])}</h3>
+</div>`
+})
+
+dashboard.innerHTML+=`
+<div class="card">
+<small>หนี้</small>
+<h3 style="color:#ef6c00">${formatMoney(totalDebt())}</h3>
+</div>`
+
+list.innerHTML=""
+
+data.forEach((d,i)=>{
+list.innerHTML+=`
+<div class="card list-item">
+<div>${d.detail}<br><small>${d.account}</small></div>
+<div>${formatMoney(d.amount)}
+<br><button onclick="data.splice(${i},1);save();show()">ลบ</button></div>
+</div>`
+})
+
+debts.forEach((d,i)=>{
+list.innerHTML+=`
+<div class="card list-item">
+<div>💳 ${d.name}<br>${formatMoney(d.total-d.paid)}</div>
+<div><button onclick="payDebt(${i})">จ่าย</button></div>
+</div>`
+})
 }
 
-function deleteItem(i){
-if(confirm("ลบรายการ?")){
-data.splice(i,1)
-save();render()
-}
-}
-
-render()
+renderAccounts()
+show()
 
 </script>
 </body>
