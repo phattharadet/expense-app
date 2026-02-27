@@ -3,129 +3,188 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Expense Tracker</title>
+
+<link rel="icon" href="icon-32.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6f00">
+
+<title>Debt Tracker</title>
 
 <style>
-body{font-family:system-ui;background:#f5f7fa;margin:0}
+body{
+  font-family:system-ui;
+  margin:0;
+  transition:.3s;
+}
+
+/* 🔴 หน้าหลัก */
+.home{
+  background:#ffebee;
+  color:#d32f2f;
+}
+
+/* 🟢 หน้าประวัติ */
+.history-mode{
+  background:#e8f5e9;
+  color:#2e7d32;
+}
+
 .container{max-width:520px;margin:auto;padding:15px}
-.card{background:#fff;padding:15px;border-radius:16px;margin-bottom:15px}
-.dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;text-align:center}
-input,select,button{width:100%;padding:10px;margin:5px 0;border-radius:10px;border:1px solid #ddd}
-.list-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.add-btn{position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:50%;font-size:30px;background:#4CAF50;color:#fff;border:none}
+
+.card{
+  background:#fff;
+  padding:15px;
+  border-radius:16px;
+  margin-bottom:15px;
+  box-shadow:0 4px 10px rgba(0,0,0,.05);
+}
+
+input,select,button{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+
+button{
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* 🔴 ปุ่มหน้าหลัก */
+.home button{
+  background:#e53935;
+  color:#fff;
+  border:none;
+}
+
+/* 🟢 ปุ่มหน้าประวัติ */
+.history-mode button{
+  background:#43a047;
+  color:#fff;
+  border:none;
+}
+
+.list-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.logo{
+  width:90px;
+  display:block;
+  margin:auto;
+}
+
+.history{display:none}
 </style>
+
 </head>
 
 <body>
 
+<body class="home">
 <div class="container">
 
-<h3 style="text-align:center">💼 Expense Tracker</h3>
+<img src="icon-512.png" class="logo">
 
-<div class="card dashboard" id="dashboard"></div>
-
-<div class="card">
-<input id="newAccount" placeholder="เพิ่มบัญชีใหม่">
-<button onclick="addAccount()">เพิ่มบัญชี</button>
-
-<select id="accountSelect"></select>
-
-<input type="date" id="date">
-<input type="text" id="detail" placeholder="รายละเอียด">
-<input type="number" id="amount" placeholder="จำนวนเงิน">
-
-<select id="type">
-<option value="income">รายรับ</option>
-<option value="expense">รายจ่าย</option>
-</select>
-
-<button onclick="addItem()">บันทึก</button>
-</div>
+<h2 style="text-align:center">Debt Tracker</h2>
 
 <div class="card">
-<h4>ถอนเงิน</h4>
-<select id="withdrawAccount"></select>
-<input type="number" id="withdrawAmount" placeholder="จำนวนเงิน">
-<button onclick="withdraw()">ถอนเงิน</button>
-</div>
-
-<div class="card">
-<h4>เพิ่มหนี้</h4>
 <input id="debtName" placeholder="ชื่อหนี้">
 <input type="number" id="debtTotal" placeholder="ยอดหนี้">
+
+<select id="debtType">
+<option value="car">🚗 รถ</option>
+<option value="home">🏠 บ้าน</option>
+<option value="loan">💰 เงินกู้</option>
+<option value="card">💳 บัตรเครดิต</option>
+<option value="borrow">💵 เงินยืม</option>
+</select>
+
 <button onclick="addDebt()">เพิ่มหนี้</button>
+</div>
+
+<div class="card">
+<h3>ยอดหนี้คงเหลือ</h3>
+<h1 id="totalDebt">0 บาท</h1>
+<button onclick="toggleHistory()">📜 ประวัติการจ่ายหนี้</button>
 </div>
 
 <div id="list"></div>
 
+<div id="historyBox" class="history">
+<div class="card">
+<h3>ประวัติการจ่ายหนี้</h3>
+<div id="historyList"></div>
+</div>
 </div>
 
-<button class="add-btn" onclick="addItem()">+</button>
+</div>
 
 <script>
 
-let data=JSON.parse(localStorage.getItem("data"))||[]
-let debts=JSON.parse(localStorage.getItem("debts"))||[]
-let accounts=JSON.parse(localStorage.getItem("accounts"))||["เงินสด"]
+let debts = JSON.parse(localStorage.getItem("debts")) || []
+let history = JSON.parse(localStorage.getItem("history")) || []
+
+const icons = {
+car:"🚗",
+home:"🏠",
+loan:"💰",
+card:"💳",
+borrow:"💵"
+}
 
 function save(){
-localStorage.setItem("data",JSON.stringify(data))
 localStorage.setItem("debts",JSON.stringify(debts))
-localStorage.setItem("accounts",JSON.stringify(accounts))
-}
-
-function renderAccounts(){
-accountSelect.innerHTML=""
-withdrawAccount.innerHTML=""
-accounts.forEach(a=>{
-accountSelect.innerHTML+=`<option>${a}</option>`
-withdrawAccount.innerHTML+=`<option>${a}</option>`
-})
-}
-
-function addAccount(){
-if(!newAccount.value)return
-accounts.push(newAccount.value)
-newAccount.value=""
-save()
-renderAccounts()
-show()
-}
-
-function addItem(){
-data.push({
-date:date.value,
-detail:detail.value,
-amount:+amount.value,
-type:type.value,
-account:accountSelect.value
-})
-save()
-show()
-}
-
-function withdraw(){
-let acc=withdrawAccount.value
-let amt=+withdrawAmount.value
-
-data.push({date:new Date().toISOString().slice(0,10),detail:"ถอนเงิน",amount:amt,type:"expense",account:acc})
-data.push({date:new Date().toISOString().slice(0,10),detail:"เงินสดจาก "+acc,amount:amt,type:"income",account:"เงินสด"})
-
-save()
-show()
-withdrawAmount.value=""
+localStorage.setItem("history",JSON.stringify(history))
 }
 
 function addDebt(){
-debts.push({name:debtName.value,total:+debtTotal.value,paid:0})
+if(!debtName.value || !debtTotal.value) return
+
+debts.push({
+name:debtName.value,
+total:+debtTotal.value,
+paid:0,
+type:debtType.value
+})
+
+debtName.value=""
+debtTotal.value=""
+
 save()
 show()
 }
 
 function payDebt(i){
-let pay=prompt("จำนวนเงินที่จ่าย")
-debts[i].paid+=+pay
-if(debts[i].paid>=debts[i].total)debts.splice(i,1)
+
+let pay = prompt("จำนวนเงินที่จ่าย")
+if(!pay) return
+
+debts[i].paid += +pay
+
+if(debts[i].paid >= debts[i].total){
+
+history.push({
+name:debts[i].name,
+total:debts[i].total,
+type:debts[i].type,
+date:new Date().toLocaleDateString()
+})
+
+debts.splice(i,1)
+}
+
+save()
+show()
+}
+
+function deleteHistory(i){
+history.splice(i,1)
 save()
 show()
 }
@@ -134,56 +193,51 @@ function totalDebt(){
 return debts.reduce((s,d)=>s+(d.total-d.paid),0)
 }
 
-function formatMoney(n){return n.toLocaleString()+" บาท"}
+function formatMoney(n){
+return n.toLocaleString()+" บาท"
+}
+
+function toggleHistory(){
+
+const isHidden = historyBox.style.display === "none"
+
+historyBox.style.display = isHidden ? "block" : "none"
+
+/* 🔥 เปลี่ยนโหมดสี */
+document.body.className = isHidden ? "history-mode" : "home"
+}
 
 function show(){
 
-let balance={}
-
-accounts.forEach(a=>balance[a]=0)
-
-data.forEach(d=>{
-if(d.type=="income") balance[d.account]+=d.amount
-else balance[d.account]-=d.amount
-})
-
-dashboard.innerHTML=""
-
-accounts.forEach(a=>{
-dashboard.innerHTML+=`
-<div class="card">
-<small>${a}</small>
-<h3>${formatMoney(balance[a])}</h3>
-</div>`
-})
-
-dashboard.innerHTML+=`
-<div class="card">
-<small>หนี้</small>
-<h3 style="color:#ef6c00">${formatMoney(totalDebt())}</h3>
-</div>`
+totalDebt.innerHTML = formatMoney(totalDebt())
 
 list.innerHTML=""
 
-data.forEach((d,i)=>{
-list.innerHTML+=`
+debts.forEach((d,i)=>{
+list.innerHTML += `
 <div class="card list-item">
-<div>${d.detail}<br><small>${d.account}</small></div>
-<div>${formatMoney(d.amount)}
-<br><button onclick="data.splice(${i},1);save();show()">ลบ</button></div>
-</div>`
+<div>${icons[d.type]} ${d.name}<br>${formatMoney(d.total-d.paid)}</div>
+<div><button onclick="payDebt(${i})">จ่าย</button></div>
+</div>
+`
 })
 
-debts.forEach((d,i)=>{
-list.innerHTML+=`
+historyList.innerHTML=""
+
+history.forEach((h,i)=>{
+historyList.innerHTML += `
 <div class="card list-item">
-<div>💳 ${d.name}<br>${formatMoney(d.total-d.paid)}</div>
-<div><button onclick="payDebt(${i})">จ่าย</button></div>
-</div>`
+<div>${icons[h.type]} ${h.name}<br>ชำระครบ ${formatMoney(h.total)}</div>
+<div>
+<small>${h.date}</small><br>
+<button onclick="deleteHistory(${i})">ลบ</button>
+</div>
+</div>
+`
 })
+
 }
 
-renderAccounts()
 show()
 
 </script>
