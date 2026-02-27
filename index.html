@@ -81,12 +81,10 @@ button{
 
 .history{display:none}
 </style>
-
 </head>
 
-<body>
-
 <body class="home">
+
 <div class="container">
 
 <img src="icon-512.png" class="logo">
@@ -144,6 +142,7 @@ localStorage.setItem("history",JSON.stringify(history))
 }
 
 function addDebt(){
+
 if(!debtName.value || !debtTotal.value) return
 
 debts.push({
@@ -173,7 +172,7 @@ history.push({
 name:debts[i].name,
 total:debts[i].total,
 type:debts[i].type,
-date:new Date().toLocaleDateString()
+date:new Date().toLocaleDateString("th-TH")
 })
 
 debts.splice(i,1)
@@ -184,13 +183,15 @@ show()
 }
 
 function deleteHistory(i){
+if(confirm("ลบรายการนี้ใช่ไหม?")){
 history.splice(i,1)
 save()
 show()
 }
+}
 
-function totalDebt(){
-return debts.reduce((s,d)=>s+(d.total-d.paid),0)
+function calculateTotalDebt(){
+return debts.reduce((sum,d)=>sum+(d.total-d.paid),0)
 }
 
 function formatMoney(n){
@@ -199,25 +200,33 @@ return n.toLocaleString()+" บาท"
 
 function toggleHistory(){
 
-const isHidden = historyBox.style.display === "none"
+const historyBox = document.getElementById("historyBox")
+const isHidden = historyBox.style.display === "none" || historyBox.style.display === ""
 
 historyBox.style.display = isHidden ? "block" : "none"
 
-/* 🔥 เปลี่ยนโหมดสี */
+/* เปลี่ยนโหมดสี */
 document.body.className = isHidden ? "history-mode" : "home"
 }
 
 function show(){
 
-totalDebt.innerHTML = formatMoney(totalDebt())
+document.getElementById("totalDebt").innerHTML =
+formatMoney(calculateTotalDebt())
 
 list.innerHTML=""
 
 debts.forEach((d,i)=>{
 list.innerHTML += `
 <div class="card list-item">
-<div>${icons[d.type]} ${d.name}<br>${formatMoney(d.total-d.paid)}</div>
-<div><button onclick="payDebt(${i})">จ่าย</button></div>
+<div>
+${icons[d.type]} ${d.name}
+<br>
+${formatMoney(d.total-d.paid)}
+</div>
+<div>
+<button onclick="payDebt(${i})">จ่าย</button>
+</div>
 </div>
 `
 })
@@ -227,7 +236,11 @@ historyList.innerHTML=""
 history.forEach((h,i)=>{
 historyList.innerHTML += `
 <div class="card list-item">
-<div>${icons[h.type]} ${h.name}<br>ชำระครบ ${formatMoney(h.total)}</div>
+<div>
+${icons[h.type]} ${h.name}
+<br>
+ชำระครบ ${formatMoney(h.total)}
+</div>
 <div>
 <small>${h.date}</small><br>
 <button onclick="deleteHistory(${i})">ลบ</button>
