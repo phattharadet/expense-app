@@ -125,8 +125,20 @@ button{
 
 <script>
 
-let debts = JSON.parse(localStorage.getItem("debts")) || []
-let history = JSON.parse(localStorage.getItem("history")) || []
+function loadData(){
+  try{
+    return {
+      debts: JSON.parse(localStorage.getItem("debts")) || [],
+      history: JSON.parse(localStorage.getItem("history")) || []
+    }
+  }catch{
+    return {debts:[],history:[]}
+  }
+}
+
+let data = loadData()
+let debts = data.debts
+let history = data.history
 
 const icons = {
 car:"🚗",
@@ -143,17 +155,21 @@ localStorage.setItem("history",JSON.stringify(history))
 
 function addDebt(){
 
-if(!debtName.value || !debtTotal.value) return
+const name = document.getElementById("debtName").value
+const total = document.getElementById("debtTotal").value
+const type = document.getElementById("debtType").value
+
+if(!name || !total) return
 
 debts.push({
-name:debtName.value,
-total:+debtTotal.value,
+name:name,
+total:+total,
 paid:0,
-type:debtType.value
+type:type
 })
 
-debtName.value=""
-debtTotal.value=""
+document.getElementById("debtName").value=""
+document.getElementById("debtTotal").value=""
 
 save()
 show()
@@ -164,7 +180,11 @@ function payDebt(i){
 let pay = prompt("จำนวนเงินที่จ่าย")
 if(!pay) return
 
-debts[i].paid += +pay
+pay = +pay
+
+if(pay <= 0) return
+
+debts[i].paid += pay
 
 if(debts[i].paid >= debts[i].total){
 
@@ -201,11 +221,13 @@ return n.toLocaleString()+" บาท"
 function toggleHistory(){
 
 const historyBox = document.getElementById("historyBox")
-const isHidden = historyBox.style.display === "none" || historyBox.style.display === ""
+
+const isHidden =
+historyBox.style.display === "none" ||
+historyBox.style.display === ""
 
 historyBox.style.display = isHidden ? "block" : "none"
 
-/* เปลี่ยนโหมดสี */
 document.body.className = isHidden ? "history-mode" : "home"
 }
 
@@ -214,14 +236,16 @@ function show(){
 document.getElementById("totalDebt").innerHTML =
 formatMoney(calculateTotalDebt())
 
+const list = document.getElementById("list")
+const historyList = document.getElementById("historyList")
+
 list.innerHTML=""
 
 debts.forEach((d,i)=>{
 list.innerHTML += `
 <div class="card list-item">
 <div>
-${icons[d.type]} ${d.name}
-<br>
+${icons[d.type]} ${d.name}<br>
 ${formatMoney(d.total-d.paid)}
 </div>
 <div>
@@ -237,8 +261,7 @@ history.forEach((h,i)=>{
 historyList.innerHTML += `
 <div class="card list-item">
 <div>
-${icons[h.type]} ${h.name}
-<br>
+${icons[h.type]} ${h.name}<br>
 ชำระครบ ${formatMoney(h.total)}
 </div>
 <div>
@@ -248,10 +271,9 @@ ${icons[h.type]} ${h.name}
 </div>
 `
 })
-
 }
 
-show()
+window.addEventListener("load", show)
 
 </script>
 </body>
