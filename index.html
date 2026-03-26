@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>รายรับ-รายจ่าย</title>
+    <title>ระบบจัดการรายรับ-รายจ่าย</title>
     <style>
         * {
             margin: 0;
@@ -41,6 +41,23 @@
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .clear-btn {
+            background: #ef4444;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            width: auto;
+        }
+
+        .clear-btn:hover {
+            background: #dc2626;
         }
 
         .summary-cards {
@@ -361,6 +378,54 @@
             font-size: 0.85rem;
         }
 
+        /* Data Management Section */
+        .data-management {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .data-management h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #333;
+            border-left: 4px solid #f59e0b;
+            padding-left: 12px;
+        }
+
+        .data-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            background: #10b981;
+            width: auto;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .import-btn {
+            background: #3b82f6;
+            width: auto;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .reset-btn {
+            background: #ef4444;
+            width: auto;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             body {
@@ -383,6 +448,14 @@
                 padding: 8px;
                 font-size: 0.85rem;
             }
+            
+            .data-buttons {
+                flex-direction: column;
+            }
+            
+            .data-buttons button {
+                width: 100%;
+            }
         }
 
         @media (max-width: 480px) {
@@ -392,6 +465,15 @@
             
             h1 {
                 font-size: 1.2rem;
+                flex-direction: column;
+            }
+            
+            .header-actions {
+                width: 100%;
+            }
+            
+            .clear-btn {
+                width: 100%;
             }
         }
     </style>
@@ -400,8 +482,10 @@
     <div class="container">
         <div class="header">
             <h1>
-                📊 ระบบจัดการรายรับ-รายจ่าย
-                <span style="font-size: 0.9rem; color: #666;">Version 2.0</span>
+                <span>📊 ระบบจัดการรายรับ-รายจ่ายและหนี้สิน</span>
+                <div class="header-actions">
+                    <button class="clear-btn" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
+                </div>
             </h1>
             <div class="summary-cards">
                 <div class="card income">
@@ -539,6 +623,24 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- จัดการข้อมูล -->
+        <div class="data-management">
+            <h2>⚙️ จัดการข้อมูล</h2>
+            <div class="data-buttons">
+                <button class="export-btn" onclick="exportData()">📤 ส่งออกข้อมูล (Backup)</button>
+                <button class="import-btn" onclick="document.getElementById('importFile').click()">📥 นำเข้าข้อมูล (Restore)</button>
+                <button class="reset-btn" onclick="resetToSample()">🎯 ข้อมูลตัวอย่าง</button>
+            </div>
+            <input type="file" id="importFile" class="file-input" accept=".json" onchange="importData(this)">
+            <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">
+                💡 เคล็ดลับ: 
+                <br>- กด "ส่งออกข้อมูล" เพื่อบันทึกข้อมูลไว้ที่เครื่อง
+                <br>- กด "นำเข้าข้อมูล" เพื่อกู้คืนข้อมูลจากไฟล์ที่บันทึกไว้
+                <br>- กด "ข้อมูลตัวอย่าง" เพื่อทดลองใช้งาน
+                <br>- กด "ล้างข้อมูลทั้งหมด" เพื่อเริ่มต้นใหม่
+            </p>
         </div>
     </div>
 
@@ -729,6 +831,139 @@
                 `;
             }).join('');
         }
+
+        // Clear all data function
+        window.clearAllData = function() {
+            if (confirm('⚠️ คำเตือน: คุณต้องการล้างข้อมูลทั้งหมดใช่หรือไม่? การกระทำนี้ไม่สามารถกู้คืนได้!')) {
+                const doubleConfirm = confirm('ยืนยันอีกครั้ง: ข้อมูลทั้งหมดจะถูกลบอย่างถาวร คุณแน่ใจใช่ไหม?');
+                if (doubleConfirm) {
+                    localStorage.removeItem('transactions');
+                    localStorage.removeItem('debts');
+                    transactions = [];
+                    debts = [];
+                    saveData();
+                    updateDisplay();
+                    alert('✅ ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว');
+                }
+            }
+        };
+
+        // Export data to file
+        window.exportData = function() {
+            const data = {
+                transactions: transactions,
+                debts: debts,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `finance_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('✅ ส่งออกข้อมูลสำเร็จ');
+        };
+
+        // Import data from file
+        window.importData = function(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.transactions && data.debts) {
+                        transactions = data.transactions;
+                        debts = data.debts;
+                        saveData();
+                        updateDisplay();
+                        alert('✅ นำเข้าข้อมูลสำเร็จ');
+                    } else {
+                        alert('❌ รูปแบบไฟล์ไม่ถูกต้อง');
+                    }
+                } catch (error) {
+                    alert('❌ ไม่สามารถอ่านไฟล์ได้');
+                }
+                input.value = '';
+            };
+            reader.readAsText(file);
+        };
+
+        // Reset to sample data
+        window.resetToSample = function() {
+            if (confirm('ต้องการโหลดข้อมูลตัวอย่างเพื่อทดลองใช้งานใช่ไหม? (ข้อมูลเดิมจะถูกลบ)')) {
+                // Sample transactions
+                transactions = [
+                    {
+                        id: '1',
+                        type: 'income',
+                        description: 'เงินเดือน',
+                        amount: 30000,
+                        category: 'เงินเดือน',
+                        date: new Date(2026, 2, 1).toISOString()
+                    },
+                    {
+                        id: '2',
+                        type: 'expense',
+                        description: 'ค่าอาหาร',
+                        amount: 5000,
+                        category: 'อาหาร',
+                        date: new Date(2026, 2, 5).toISOString()
+                    },
+                    {
+                        id: '3',
+                        type: 'expense',
+                        description: 'ค่าเดินทาง',
+                        amount: 2000,
+                        category: 'เดินทาง',
+                        date: new Date(2026, 2, 10).toISOString()
+                    }
+                ];
+                
+                // Sample debts
+                debts = [
+                    {
+                        id: '1',
+                        name: 'บัตรเครดิต A',
+                        amount: 15000,
+                        type: 'owe',
+                        note: 'ชำระภายในสิ้นเดือน',
+                        payments: [
+                            {
+                                id: 'p1',
+                                amount: 5000,
+                                date: new Date(2026, 2, 15).toISOString(),
+                                note: 'งวดที่ 1'
+                            }
+                        ],
+                        paidAmount: 5000,
+                        status: 'partial',
+                        date: new Date(2026, 2, 1).toISOString()
+                    },
+                    {
+                        id: '2',
+                        name: 'เพื่อน ก',
+                        amount: 10000,
+                        type: 'owed',
+                        note: 'ยืมไปซื้อโทรศัพท์',
+                        payments: [],
+                        paidAmount: 0,
+                        status: 'unpaid',
+                        date: new Date(2026, 2, 10).toISOString()
+                    }
+                ];
+                
+                saveData();
+                updateDisplay();
+                alert('✅ โหลดข้อมูลตัวอย่างเรียบร้อยแล้ว');
+            }
+        };
 
         // Open payment modal
         window.openPaymentModal = function(debtId) {
